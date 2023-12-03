@@ -145,7 +145,9 @@ def print_and_store_result(
             )
             is False
         ):
-            os.makedirs(result_root + "result/" + dataset + "/" + method + "/" + strategy)
+            os.makedirs(
+                result_root + "result/" + dataset + "/" + method + "/" + strategy
+            )
 
         with open(
             result_root

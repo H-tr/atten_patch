@@ -178,7 +178,11 @@ def geometry_verification(q_desc, r_descs):
                 score_max_row = np.argmax(score_matrix, axis=1)
                 score_max_col = np.argmax(score_matrix, axis=0)
 
-                mutuals = np.atleast_1d(np.argwhere(score_max_row[score_max_col] == np.arange(len(score_max_col))).squeeze())
+                mutuals = np.atleast_1d(
+                    np.argwhere(
+                        score_max_row[score_max_col] == np.arange(len(score_max_col))
+                    ).squeeze()
+                )
 
                 query_2d = mutuals
                 refer_2d = score_max_col[mutuals]
@@ -187,12 +191,18 @@ def geometry_verification(q_desc, r_descs):
                 refer_2d = cache_table[refer_2d]
 
                 if query_2d.shape[0] > 3:
-                    _, mask = cv2.findHomography(refer_2d, query_2d, cv2.FM_RANSAC, ransacReprojThreshold=reproj_err)
+                    _, mask = cv2.findHomography(
+                        refer_2d,
+                        query_2d,
+                        cv2.FM_RANSAC,
+                        ransacReprojThreshold=reproj_err,
+                    )
                     inlier_index_keypoints = refer_2d[mask.ravel() == 1]
                     inlier_count = inlier_index_keypoints.shape[0]
                     similarity_score[refer] = inlier_count / q_desc.shape[0]
 
     return similarity_score
+
 
 if __name__ == "__main__":
     # Parse command line arguments.
@@ -331,10 +341,10 @@ if __name__ == "__main__":
             query_encoding_time += time.time() - query_encoding_timer_start
 
             matching_timer_starter = time.time()
-            
+
             if method == "AttnPatch":
                 anchors = np.array([], dtype=np.int64)
-                
+
                 if anchor_select_policy == "largest_score":
                     query_self_sim = np.dot(desc.transpose(), desc)
                     query_self_sim = np.sum(query_self_sim, axis=0)
@@ -344,12 +354,14 @@ if __name__ == "__main__":
                         for col in range(8):
                             pos = np.argmin(
                                 query_self_sim[
-                                    (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                                    (4 * row) : (4 * (row + 1)),
+                                    (4 * col) : (4 * (col + 1)),
                                 ]
                             )
                             tmp_anchor = np.reshape(
                                 idx_table[
-                                    (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                                    (4 * row) : (4 * (row + 1)),
+                                    (4 * col) : (4 * (col + 1)),
                                 ],
                                 -1,
                             )[pos]
@@ -359,7 +371,8 @@ if __name__ == "__main__":
                         for col in range(8):
                             tmp_anchor = np.reshape(
                                 idx_table[
-                                    (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                                    (4 * row) : (4 * (row + 1)),
+                                    (4 * col) : (4 * (col + 1)),
                                 ],
                                 -1,
                             )[np.random.randint(0, 16)]
