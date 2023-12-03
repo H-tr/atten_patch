@@ -70,4 +70,6 @@ front_end_model: 'Val_model_heatmap'  # 'Train_model_frontend'
 model:
   nms_dist: 4
   conf_thresh: 0.015
+  nn_thresh: 0.7
   weights_path: 'pretrained_models/superpoint_v1.pth'
+  cuda: True

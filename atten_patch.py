@@ -153,10 +153,6 @@ if __name__ == '__main__':
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description='PyTorch SuperPoint Demo.')
     parser.add_argument('--model', type=str, default='pre-trained')
-    parser.add_argument('--nn_thresh', type=float, default=0.7,
-                        help='Descriptor matching threshold (default: 0.7).')
-    parser.add_argument('--cuda', action='store_true',
-                        help='Use cuda GPU to speed up network processing speed (default: False)')
     parser.add_argument('--config', type=str, default='./config/vpr_bench_config.yaml')
     parser.add_argument('--prediction_path', type=str, default=None)
     parser.add_argument('--refer_desc_path', type=str, default=None)
@@ -181,6 +177,8 @@ if __name__ == '__main__':
     weights_path = config['model']['weights_path']
     nms_dist = config['model']['nms_dist']
     conf_thresh = config['model']['conf_thresh']
+    nn_thresh = config['model']['nn_thresh']
+    cuda = config['model']['cuda']
 
     if opt.prediction_path is not None:
         predictions = pickle.load(open(opt.prediction_path, 'rb'))
@@ -198,9 +196,9 @@ if __name__ == '__main__':
                 # This class runs the SuperPoint network and processes its outputs.
                 fe = SuperPointFrontend(weights_path=weights_path,
                                         nms_dist=nms_dist,
-                                        conf_thresh=opt.conf_thresh,
-                                        nn_thresh=opt.nn_thresh,
-                                        cuda=opt.cuda)
+                                        conf_thresh=conf_thresh,
+                                        nn_thresh=nn_thresh,
+                                        cuda=cuda)
             else:
                 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                 from utils.loader import get_module
