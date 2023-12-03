@@ -1,0 +1,20 @@
+dataset: 
+  name: "SPED"
+  Root: '/mnt/d/Datasets'
+  query_dir: '/SPED/Test/query/'
+  refer_dir: '/SPED/Test/ref/'
+
+model:
+  nms_dist: 4
+  conf_thresh: 0.015
+  nn_thresh: 0.7
+  weights_path: 'pretrained_models/superpoint_v1.pth'
+  cuda: True
+  
+output_1:
+  method: "FullGeomVeri" # ["AttnPatch", "FullGeomVeri"]
+  anchor_select_policy: "largest_score"  # ["random", "largest_score", "conv_filter"]
+
+output_2:
+  method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
+  anchor_select_policy: "largest_score"  # ["random", "largest_score", "conv_filter"]

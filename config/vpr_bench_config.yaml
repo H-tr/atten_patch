@@ -1,7 +1,5 @@
 Dataset:
   Root: '/mnt/d/Datasets'
-#  Root: '/media/dszhang/DATA/vpr_datasets'
-#  Root: '/media/dszhang/DATA1/VPR/Nordland'
 
   Nordland:
     path: '/Nordland/'
@@ -63,7 +61,7 @@ store_result: True
 SuperPoint:
   Root: '/home/run/Data/Datasets/'
 
-output_path: 'output/'
+output_path: 'outputs/'
 
 front_end_model: 'Val_model_heatmap'  # 'Train_model_frontend'
 
@@ -73,3 +71,5 @@ model:
   nn_thresh: 0.7
   weights_path: 'pretrained_models/superpoint_v1.pth'
   cuda: True
+  method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
+  anchor_select_policy: "random"  # ["random", "largest_score", "conv_filter"]

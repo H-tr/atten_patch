@@ -931,35 +931,6 @@ def sumto2D(ndtensor):
     return ndtensor.sum(dim=1).sum(dim=1)
 
 
-def mAP(pred_batch, labels_batch):
-    pass
-
-
-def precisionRecall_torch(pred, labels):
-    offset = 10**-6
-    assert (
-        pred.size() == labels.size()
-    ), "Sizes of pred, labels should match when you get the precision/recall!"
-    precision = torch.sum(pred * labels) / (torch.sum(pred) + offset)
-    recall = torch.sum(pred * labels) / (torch.sum(labels) + offset)
-    if precision.item() > 1.0:
-        print(pred)
-        print(labels)
-        import scipy.io.savemat as savemat
-
-        savemat("pre_recall.mat", {"pred": pred, "labels": labels})
-    assert precision.item() <= 1.0 and precision.item() >= 0.0
-    return {"precision": precision, "recall": recall}
-
-
-def precisionRecall(pred, labels, thd=None):
-    offset = 10**-6
-    if thd is None:
-        precision = np.sum(pred * labels) / (np.sum(pred) + offset)
-        recall = np.sum(pred * labels) / (np.sum(labels) + offset)
-    return {"precision": precision, "recall": recall}
-
-
 def getWriterPath(task="train", exper_name="", date=True):
     import datetime
 

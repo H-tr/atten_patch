@@ -100,6 +100,7 @@ def print_and_store_result(
     matching_time,
     similarity,
     method,
+    strategy,
     parameters,
     recall_rate_n_range,
 ):
@@ -136,16 +137,15 @@ def print_and_store_result(
 
     if config["store_result"] is True:
         if os.path.exists(result_root + "result/" + dataset + "/" + method) is False:
-            os.mkdir(result_root + "result/" + dataset + "/" + method)
+            os.makedirs(result_root + "result/" + dataset + "/" + method)
 
-        time_str = time.strftime("%Y%m%d-%H%M%S")
         if (
             os.path.exists(
-                result_root + "result/" + dataset + "/" + method + "/" + time_str
+                result_root + "result/" + dataset + "/" + method + "/" + strategy
             )
             is False
         ):
-            os.mkdir(result_root + "result/" + dataset + "/" + method + "/" + time_str)
+            os.makedirs(result_root + "result/" + dataset + "/" + method + "/" + strategy)
 
         with open(
             result_root
@@ -154,7 +154,7 @@ def print_and_store_result(
             + "/"
             + method
             + "/"
-            + time_str
+            + strategy
             + "/similarity",
             "wb",
         ) as fp:
@@ -169,7 +169,7 @@ def print_and_store_result(
             + "/"
             + method
             + "/"
-            + time_str
+            + strategy
             + "/sorted_similarity",
             "wb",
         ) as fp:
@@ -184,7 +184,7 @@ def print_and_store_result(
             + "/"
             + method
             + "/"
-            + time_str
+            + strategy
             + "/sorted_prediction",
             "wb",
         ) as fp:
@@ -199,7 +199,7 @@ def print_and_store_result(
             + "/"
             + method
             + "/"
-            + time_str
+            + strategy
             + "/failed_cases",
             "wb",
         ) as fp:
@@ -214,7 +214,7 @@ def print_and_store_result(
             + "/"
             + method
             + "/"
-            + time_str
+            + strategy
             + "/result.txt",
             "w",
         ) as f:
@@ -287,7 +287,7 @@ def print_and_store_result(
             + "/"
             + method
             + "/"
-            + time_str
+            + strategy
         )
 
 

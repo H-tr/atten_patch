@@ -62,7 +62,6 @@ from superpoint.utils import (
 threshold = 0.55
 reproj_err = 3
 params = [threshold, reproj_err]
-method = "AttnPatch"
 
 query_index_offset = 0
 refer_index_offset = 0
@@ -169,6 +168,32 @@ def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
     return scores
 
 
+def geometry_verification(q_desc, r_descs):
+    similarity_score = np.zeros(total_refer_imgs)
+    if q_desc is not None:
+        for refer in range(total_refer_imgs):
+            # print('==> Query ' + str(query) + ' is matching ' + 'reference ' + str(refer))
+            if r_descs[refer] is not None:
+                score_matrix = np.dot(q_desc.transpose(), r_descs[refer])
+                score_max_row = np.argmax(score_matrix, axis=1)
+                score_max_col = np.argmax(score_matrix, axis=0)
+
+                mutuals = np.atleast_1d(np.argwhere(score_max_row[score_max_col] == np.arange(len(score_max_col))).squeeze())
+
+                query_2d = mutuals
+                refer_2d = score_max_col[mutuals]
+
+                query_2d = cache_table[query_2d]
+                refer_2d = cache_table[refer_2d]
+
+                if query_2d.shape[0] > 3:
+                    _, mask = cv2.findHomography(refer_2d, query_2d, cv2.FM_RANSAC, ransacReprojThreshold=reproj_err)
+                    inlier_index_keypoints = refer_2d[mask.ravel() == 1]
+                    inlier_count = inlier_index_keypoints.shape[0]
+                    similarity_score[refer] = inlier_count / q_desc.shape[0]
+
+    return similarity_score
+
 if __name__ == "__main__":
     # Parse command line arguments.
     parser = argparse.ArgumentParser(description="PyTorch SuperPoint Demo.")
@@ -199,6 +224,8 @@ if __name__ == "__main__":
     conf_thresh = config["model"]["conf_thresh"]
     nn_thresh = config["model"]["nn_thresh"]
     cuda = config["model"]["cuda"]
+    method = config["model"]["method"]
+    anchor_select_policy = config["model"]["anchor_select_policy"]
 
     if opt.prediction_path is not None:
         predictions = pickle.load(open(opt.prediction_path, "rb"))
@@ -298,29 +325,58 @@ if __name__ == "__main__":
             query_encoding_time += time.time() - query_encoding_timer_start
 
             matching_timer_starter = time.time()
-            anchors = np.array([], dtype=np.int64)
-            query_self_sim = np.dot(desc.transpose(), desc)
-            query_self_sim = np.sum(query_self_sim, axis=0)
-            query_self_sim = np.reshape(-query_self_sim, (32, 32))
+            
+            if method == "AttnPatch":
+                print("==> method: AttnPatch")
+                anchors = np.array([], dtype=np.int64)
+                
+                if anchor_select_policy == "largest_score":
+                    print("==> anchor_select_policy: largest_score")
+                    query_self_sim = np.dot(desc.transpose(), desc)
+                    query_self_sim = np.sum(query_self_sim, axis=0)
+                    query_self_sim = np.reshape(-query_self_sim, (32, 32))
 
-            for row in range(8):
-                for col in range(8):
-                    pos = np.argmin(
-                        query_self_sim[
-                            (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
-                        ]
+                    for row in range(8):
+                        for col in range(8):
+                            pos = np.argmin(
+                                query_self_sim[
+                                    (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                                ]
+                            )
+                            tmp_anchor = np.reshape(
+                                idx_table[
+                                    (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                                ],
+                                -1,
+                            )[pos]
+                            anchors = np.append(anchors, tmp_anchor)
+                elif anchor_select_policy == "random":
+                    print("==> anchor_select_policy: random")
+                    for row in range(8):
+                        for col in range(8):
+                            tmp_anchor = np.reshape(
+                                idx_table[
+                                    (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                                ],
+                                -1,
+                            )[np.random.randint(0, 16)]
+                            anchors = np.append(anchors, tmp_anchor)
+                elif anchor_select_policy == "conv_filter":
+                    print("==> anchor_select_policy: conv_filter")
+                    pass
+                else:
+                    raise ValueError(
+                        "anchor_select_policy should be one of [largest_score, random, conv_filter]"
                     )
-                    tmp_anchor = np.reshape(
-                        idx_table[
-                            (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
-                        ],
-                        -1,
-                    )[pos]
-                    anchors = np.append(anchors, tmp_anchor)
 
-            similarity.append(
-                adaptive_spatial_matching(desc, refer_descriptors, anchors)
-            )
+                similarity.append(
+                    adaptive_spatial_matching(desc, refer_descriptors, anchors)
+                )
+            elif method == "FullGeomVeri":
+                print("==> method: FullGeomVeri")
+                similarity.append(geometry_verification(desc, refer_descriptors))
+            else:
+                raise ValueError("method should be one of [AttnPatch, FullGeomVeri]")
             matching_time += time.time() - matching_timer_starter
 
         total_time = time.time() - total_timer_start
@@ -333,6 +389,7 @@ if __name__ == "__main__":
             matching_time,
             similarity,
             method,
+            anchor_select_policy,
             params,
             20,
         )
