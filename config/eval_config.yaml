@@ -15,7 +15,7 @@ model:
   
 output_1:
   method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "random"  # ["random", "largest_score", "conv_filter", "default"]
+  anchor_select_policy: "conv_filter"  # ["random", "largest_score", "conv_filter"]
 
 output_2:
   method: "FullGeomVeri" # ["AttnPatch", "FullGeomVeri"]
