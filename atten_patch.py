@@ -53,12 +53,16 @@ import pickle
 
 from tqdm import tqdm
 from superpoint.superpoint import SuperPointFrontend
-from superpoint.utils import get_query_img_name, get_refer_img_name, print_and_store_result
+from superpoint.utils import (
+    get_query_img_name,
+    get_refer_img_name,
+    print_and_store_result,
+)
 
 threshold = 0.55
 reproj_err = 3
 params = [threshold, reproj_err]
-method = 'AttnPatch'
+method = "AttnPatch"
 
 query_index_offset = 0
 refer_index_offset = 0
@@ -66,13 +70,17 @@ refer_index_offset = 0
 query_descriptors = []
 refer_descriptors = []
 
-pos_ptr = np.array([[-99, -98, -97, -96, -95, -94, -93],
-                    [-67, -66, -65, -64, -63, -62, -61],
-                    [-35, -34, -33, -32, -31, -30, -29],
-                    [-3, -2, -1, 0, 1, 2, 3],
-                    [29, 30, 31, 32, 33, 34, 35],
-                    [61, 62, 63, 64, 65, 66, 67],
-                    [93, 94, 95, 96, 97, 98, 99]])
+pos_ptr = np.array(
+    [
+        [-99, -98, -97, -96, -95, -94, -93],
+        [-67, -66, -65, -64, -63, -62, -61],
+        [-35, -34, -33, -32, -31, -30, -29],
+        [-3, -2, -1, 0, 1, 2, 3],
+        [29, 30, 31, 32, 33, 34, 35],
+        [61, 62, 63, 64, 65, 66, 67],
+        [93, 94, 95, 96, 97, 98, 99],
+    ]
+)
 
 idx_table = np.reshape(np.array([val for val in range(0, 32 * 32)]), (32, 32))
 cache_table = np.zeros((1024, 2), dtype=int)
@@ -83,7 +91,7 @@ for cnt in range(1024):
 
 # Stub to warn about opencv version.
 if int(cv2.__version__[0]) < 3:  # pragma: no cover
-    print('Warning: OpenCV 3 is not installed')
+    print("Warning: OpenCV 3 is not installed")
 
 
 def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
@@ -91,12 +99,16 @@ def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
     if query_descriptor is not None:
         for refer in range(len(refer_descriptors)):
             if refer_descriptors[refer + refer_index_offset] is not None:
-                score_matrix = np.dot(query_descriptor.transpose()[anchors],
-                                      refer_descriptors[refer + refer_index_offset])
+                score_matrix = np.dot(
+                    query_descriptor.transpose()[anchors],
+                    refer_descriptors[refer + refer_index_offset],
+                )
                 score_max_vector = np.max(score_matrix, axis=1)
                 where_max_matrix = np.argmax(score_matrix, axis=1)
 
-                where = [idx for idx, val in enumerate(score_max_vector) if val > threshold]
+                where = [
+                    idx for idx, val in enumerate(score_max_vector) if val > threshold
+                ]
                 query_where = anchors[where]
                 refer_where = where_max_matrix[where]
 
@@ -130,9 +142,12 @@ def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
                 select_roi_idx = np.where(mul_score > threshold)
                 query_roi = query_roi[select_roi_idx]
                 refer_roi = refer_roi[select_roi_idx]
-                unique, unique_indices, unique_inverse, unique_counts = np.unique(query_roi, return_index=True,
-                                                                                  return_inverse=True,
-                                                                                  return_counts=True)
+                unique, unique_indices, unique_inverse, unique_counts = np.unique(
+                    query_roi,
+                    return_index=True,
+                    return_inverse=True,
+                    return_counts=True,
+                )
                 query_roi = query_roi[unique_indices]
                 refer_roi = refer_roi[unique_indices]
 
@@ -140,8 +155,12 @@ def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
                 refer_2d_idx = cache_table[refer_roi]
 
                 if query_2d_idx.shape[0] > 3:
-                    _, mask = cv2.findHomography(refer_2d_idx, query_2d_idx, cv2.FM_RANSAC,
-                                                 ransacReprojThreshold=reproj_err)
+                    _, mask = cv2.findHomography(
+                        refer_2d_idx,
+                        query_2d_idx,
+                        cv2.FM_RANSAC,
+                        ransacReprojThreshold=reproj_err,
+                    )
 
                     inlier_index_keypoints = refer_2d_idx[mask.ravel() == 1]
                     inlier_count = inlier_index_keypoints.shape[0]
@@ -149,81 +168,93 @@ def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
 
     return scores
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Parse command line arguments.
-    parser = argparse.ArgumentParser(description='PyTorch SuperPoint Demo.')
-    parser.add_argument('--model', type=str, default='pre-trained')
-    parser.add_argument('--config', type=str, default='./config/vpr_bench_config.yaml')
-    parser.add_argument('--prediction_path', type=str, default=None)
-    parser.add_argument('--refer_desc_path', type=str, default=None)
-    parser.add_argument('--dataset', type=str, required=True)
+    parser = argparse.ArgumentParser(description="PyTorch SuperPoint Demo.")
+    parser.add_argument("--model", type=str, default="pre-trained")
+    parser.add_argument("--config", type=str, default="./config/vpr_bench_config.yaml")
+    parser.add_argument("--prediction_path", type=str, default=None)
+    parser.add_argument("--refer_desc_path", type=str, default=None)
+    parser.add_argument("--dataset", type=str, required=True)
     opt = parser.parse_args()
     print(opt)
 
-    with open(opt.config, 'r') as fin:
+    with open(opt.config, "r") as fin:
         config = yaml.safe_load(fin)
 
     dataset = opt.dataset
-    total_refer_imgs = config['Dataset'][opt.dataset]['total_refer_imgs']
-    total_query_imgs = config['Dataset'][opt.dataset]['total_query_imgs']
-    refer_dir = config['Dataset']['Root'] + config['Dataset'][opt.dataset]['refer_dir']
-    query_dir = config['Dataset']['Root'] + config['Dataset'][opt.dataset]['query_dir']
-    dataset_dir = config['Dataset']['Root'] + config['Dataset'][opt.dataset]['path']
-    resized_width = config['resized_width']
-    resized_height = config['resized_height']
-    sp_root = config['SuperPoint']['Root']
-    
+    total_refer_imgs = config["Dataset"][opt.dataset]["total_refer_imgs"]
+    total_query_imgs = config["Dataset"][opt.dataset]["total_query_imgs"]
+    refer_dir = config["Dataset"]["Root"] + config["Dataset"][opt.dataset]["refer_dir"]
+    query_dir = config["Dataset"]["Root"] + config["Dataset"][opt.dataset]["query_dir"]
+    dataset_dir = config["Dataset"]["Root"] + config["Dataset"][opt.dataset]["path"]
+    resized_width = config["resized_width"]
+    resized_height = config["resized_height"]
+    sp_root = config["SuperPoint"]["Root"]
+
     # model parameters
-    weights_path = config['model']['weights_path']
-    nms_dist = config['model']['nms_dist']
-    conf_thresh = config['model']['conf_thresh']
-    nn_thresh = config['model']['nn_thresh']
-    cuda = config['model']['cuda']
+    weights_path = config["model"]["weights_path"]
+    nms_dist = config["model"]["nms_dist"]
+    conf_thresh = config["model"]["conf_thresh"]
+    nn_thresh = config["model"]["nn_thresh"]
+    cuda = config["model"]["cuda"]
 
     if opt.prediction_path is not None:
-        predictions = pickle.load(open(opt.prediction_path, 'rb'))
+        predictions = pickle.load(open(opt.prediction_path, "rb"))
         # print_and_store_result_ii(config, total_query_imgs, predictions,
         #                           dataset_dir, sp_root, dataset, 'Patch_NetVLAD', 20)
     else:
         if opt.refer_desc_path is not None:
-            refer_descriptors = pickle.load(open(opt.refer_desc_path, 'rb'))
-            print('==> Successfully loaded reference descriptors.')
+            refer_descriptors = pickle.load(open(opt.refer_desc_path, "rb"))
+            print("==> Successfully loaded reference descriptors.")
         else:
             total_timer_start = time.time()
 
-            print('==> Loading pre-trained network...')
-            if opt.model == 'pre-trained':
+            print("==> Loading pre-trained network...")
+            if opt.model == "pre-trained":
                 # This class runs the SuperPoint network and processes its outputs.
-                fe = SuperPointFrontend(weights_path=weights_path,
-                                        nms_dist=nms_dist,
-                                        conf_thresh=conf_thresh,
-                                        nn_thresh=nn_thresh,
-                                        cuda=cuda)
+                fe = SuperPointFrontend(
+                    weights_path=weights_path,
+                    nms_dist=nms_dist,
+                    conf_thresh=conf_thresh,
+                    nn_thresh=nn_thresh,
+                    cuda=cuda,
+                )
             else:
-                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 from utils.loader import get_module
-                val_model = get_module('', config['front_end_model'])
-                val_agent = val_model(config['model'], device=device)
+
+                val_model = get_module("", config["front_end_model"])
+                val_agent = val_model(config["model"], device=device)
                 val_agent.loadModel()
-            print('==> Successfully loaded pre-trained network.')
+            print("==> Successfully loaded pre-trained network.")
 
             refer_encoding_time = 0
-            print('==> Encoding References...')
+            print("==> Encoding References...")
             for refer in tqdm(range(total_refer_imgs), ncols=100):
                 # print('==> Refer: ' + str(refer + refer_index_offset))
                 try:
-                    refer_img = cv2.imread(refer_dir + get_refer_img_name(dataset, refer + refer_index_offset), 0)
+                    refer_img = cv2.imread(
+                        refer_dir
+                        + get_refer_img_name(dataset, refer + refer_index_offset),
+                        0,
+                    )
                     # refer_rgb = cv2.imread(refer_dir + get_refer_img_name(dataset, refer+refer_index_offset))
 
-                except(IOError, ValueError) as e:
+                except (IOError, ValueError) as e:
                     refer_img = None
-                    print('Exception! \n \n \n \n')
+                    print("Exception! \n \n \n \n")
 
-                refer_img = cv2.resize(refer_img, (resized_width, resized_height), interpolation=cv2.INTER_AREA)
-                refer_img = (refer_img.astype('float32') / 255.)
+                refer_img = cv2.resize(
+                    refer_img,
+                    (resized_width, resized_height),
+                    interpolation=cv2.INTER_AREA,
+                )
+                refer_img = refer_img.astype("float32") / 255.0
 
                 refer_encoding_timer_start = time.time()
-                if opt.model == 'pre-trained':
+                if opt.model == "pre-trained":
                     desc = fe.run(refer_img)
                 else:
                     with torch.no_grad():
@@ -236,25 +267,30 @@ if __name__ == '__main__':
         matching_time = 0
         similarity = []
         tmp_query_rois = []
-        print('\n==> Matching...')
+        print("\n==> Matching...")
         for query in tqdm(range(total_query_imgs), ncols=100):
             # print('==> Query: ' + str(query + query_index_offset))
             try:
-                query_img = cv2.imread(query_dir + get_query_img_name(dataset, query + query_index_offset), 0)
+                query_img = cv2.imread(
+                    query_dir + get_query_img_name(dataset, query + query_index_offset),
+                    0,
+                )
                 # query_rgb = cv2.imread(query_dir + get_query_img_name(dataset, query + query_index_offset))
 
-            except(IOError, ValueError) as e:
+            except (IOError, ValueError) as e:
                 query_img = None
-                print('Exception! \n \n \n \n')
+                print("Exception! \n \n \n \n")
 
-            query_img = cv2.resize(query_img, (resized_width, resized_height), interpolation=cv2.INTER_AREA)
-            query_img = (query_img.astype('float32') / 255.)
+            query_img = cv2.resize(
+                query_img, (resized_width, resized_height), interpolation=cv2.INTER_AREA
+            )
+            query_img = query_img.astype("float32") / 255.0
 
             # query_rgb = cv2.resize(query_rgb, (resized_width, resized_height), interpolation=cv2.INTER_AREA)
             # query_rgb = (query_rgb.astype('float32') / 255.)
 
             query_encoding_timer_start = time.time()
-            if opt.model == 'pre-trained':
+            if opt.model == "pre-trained":
                 desc = fe.run(query_img)
             else:
                 with torch.no_grad():
@@ -269,14 +305,34 @@ if __name__ == '__main__':
 
             for row in range(8):
                 for col in range(8):
-                    pos = np.argmin(query_self_sim[(4 * row):(4 * (row + 1)), (4 * col):(4 * (col + 1))])
-                    tmp_anchor = np.reshape(idx_table[(4 * row):(4 * (row + 1)), (4 * col):(4 * (col + 1))], -1)[pos]
+                    pos = np.argmin(
+                        query_self_sim[
+                            (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                        ]
+                    )
+                    tmp_anchor = np.reshape(
+                        idx_table[
+                            (4 * row) : (4 * (row + 1)), (4 * col) : (4 * (col + 1))
+                        ],
+                        -1,
+                    )[pos]
                     anchors = np.append(anchors, tmp_anchor)
 
-            similarity.append(adaptive_spatial_matching(desc, refer_descriptors, anchors))
+            similarity.append(
+                adaptive_spatial_matching(desc, refer_descriptors, anchors)
+            )
             matching_time += time.time() - matching_timer_starter
 
         total_time = time.time() - total_timer_start
 
-        print_and_store_result(config, opt, total_time, refer_encoding_time, matching_time, similarity, method,
-                               params, 20)
+        print_and_store_result(
+            config,
+            opt,
+            total_time,
+            refer_encoding_time,
+            matching_time,
+            similarity,
+            method,
+            params,
+            20,
+        )

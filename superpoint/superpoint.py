@@ -48,7 +48,7 @@ import torch
 
 
 class SuperPointNet(torch.nn.Module):
-    """ Pytorch definition of SuperPoint Network. """
+    """Pytorch definition of SuperPoint Network."""
 
     def __init__(self):
         super(SuperPointNet, self).__init__()
@@ -72,7 +72,7 @@ class SuperPointNet(torch.nn.Module):
         self.convDb = torch.nn.Conv2d(c5, d1, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
-        """ Forward pass that jointly computes unprocessed point and descriptor
+        """Forward pass that jointly computes unprocessed point and descriptor
         tensors.
         Input
           x: Image pytorch tensor shaped N x 1 x H x W.
@@ -104,11 +104,10 @@ class SuperPointNet(torch.nn.Module):
 
 
 class SuperPointFrontend(object):
-    """ Wrapper around pytorch net to help with pre and post image processing. """
+    """Wrapper around pytorch net to help with pre and post image processing."""
 
-    def __init__(self, weights_path, nms_dist, conf_thresh, nn_thresh,
-                 cuda=False):
-        self.name = 'SuperPoint'
+    def __init__(self, weights_path, nms_dist, conf_thresh, nn_thresh, cuda=False):
+        self.name = "SuperPoint"
         self.cuda = cuda
         self.nms_dist = nms_dist
         self.conf_thresh = conf_thresh
@@ -124,8 +123,9 @@ class SuperPointFrontend(object):
             self.net = self.net.cuda()
         else:
             # Train on GPU, deploy on CPU.
-            self.net.load_state_dict(torch.load(weights_path,
-                                                map_location=lambda storage, loc: storage))
+            self.net.load_state_dict(
+                torch.load(weights_path, map_location=lambda storage, loc: storage)
+            )
         self.net.eval()
 
     def nms_fast(self, in_corners, H, W, dist_thresh):
@@ -172,14 +172,14 @@ class SuperPointFrontend(object):
             inds[rcorners[1, i], rcorners[0, i]] = i
         # Pad the border of the grid, so that we can NMS points near the border.
         pad = dist_thresh
-        grid = np.pad(grid, ((pad, pad), (pad, pad)), mode='constant')
+        grid = np.pad(grid, ((pad, pad), (pad, pad)), mode="constant")
         # Iterate through points, highest to lowest conf, suppress neighborhood.
         count = 0
         for i, rc in enumerate(rcorners.T):
             # Account for top and left padding.
             pt = (rc[0] + pad, rc[1] + pad)
             if grid[pt[1], pt[0]] == 1:  # If not yet suppressed.
-                grid[pt[1] - pad:pt[1] + pad + 1, pt[0] - pad:pt[0] + pad + 1] = 0
+                grid[pt[1] - pad : pt[1] + pad + 1, pt[0] - pad : pt[0] + pad + 1] = 0
                 grid[pt[1], pt[0]] = -1
                 count += 1
         # Get all surviving -1's and return sorted array of remaining corners.
@@ -194,19 +194,19 @@ class SuperPointFrontend(object):
         return out, out_inds
 
     def run(self, img):
-        """ Process a numpy image to extract points and descriptors.
+        """Process a numpy image to extract points and descriptors.
         Input
           img - HxW numpy float32 input image in range [0,1].
         Output
           corners - 3xN numpy array with corners [x_i, y_i, confidence_i]^T.
           desc - 256xN numpy array of corresponding unit normalized descriptors.
           heatmap - HxW numpy heatmap in range [0,1] of point confidences.
-          """
-        assert img.ndim == 2, 'Image must be grayscale.'
-        assert img.dtype == np.float32, 'Image must be float32.'
+        """
+        assert img.ndim == 2, "Image must be grayscale."
+        assert img.dtype == np.float32, "Image must be float32."
         H, W = img.shape[0], img.shape[1]
         inp = img.copy()
-        inp = (inp.reshape(1, H, W))
+        inp = inp.reshape(1, H, W)
         inp = torch.from_numpy(inp)
         inp = torch.autograd.Variable(inp).view(1, 1, H, W)
         if self.cuda:
