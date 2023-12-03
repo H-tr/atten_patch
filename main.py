@@ -333,11 +333,9 @@ if __name__ == "__main__":
             matching_timer_starter = time.time()
             
             if method == "AttnPatch":
-                print("==> method: AttnPatch")
                 anchors = np.array([], dtype=np.int64)
                 
                 if anchor_select_policy == "largest_score":
-                    print("==> anchor_select_policy: largest_score")
                     query_self_sim = np.dot(desc.transpose(), desc)
                     query_self_sim = np.sum(query_self_sim, axis=0)
                     query_self_sim = np.reshape(-query_self_sim, (32, 32))
@@ -357,7 +355,6 @@ if __name__ == "__main__":
                             )[pos]
                             anchors = np.append(anchors, tmp_anchor)
                 elif anchor_select_policy == "random":
-                    print("==> anchor_select_policy: random")
                     for row in range(8):
                         for col in range(8):
                             tmp_anchor = np.reshape(
@@ -368,7 +365,6 @@ if __name__ == "__main__":
                             )[np.random.randint(0, 16)]
                             anchors = np.append(anchors, tmp_anchor)
                 elif anchor_select_policy == "conv_filter":
-                    print("==> anchor_select_policy: conv_filter")
                     # randomly select 64 points from edges_query where the value is not 0
                     edges_query = np.reshape(edges_query, -1)
                     filtered_args = np.argwhere(edges_query != 0)
@@ -383,7 +379,6 @@ if __name__ == "__main__":
                     adaptive_spatial_matching(desc, refer_descriptors, anchors)
                 )
             elif method == "FullGeomVeri":
-                print("==> method: FullGeomVeri")
                 similarity.append(geometry_verification(desc, refer_descriptors))
             else:
                 raise ValueError("method should be one of [AttnPatch, FullGeomVeri]")
