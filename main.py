@@ -312,6 +312,12 @@ if __name__ == "__main__":
                 query_img, (resized_width, resized_height), interpolation=cv2.INTER_AREA
             )
             query_img = query_img.astype("float32") / 255.0
+            if anchor_select_policy == "conv_filter":
+                edges_query = cv2.Canny(query_img, 300, 1000, apertureSize=5)
+                # deresolution to 64 * 64
+                edges_query = cv2.resize(
+                    edges_query, (32, 32), interpolation=cv2.INTER_AREA
+                )
 
             # query_rgb = cv2.resize(query_rgb, (resized_width, resized_height), interpolation=cv2.INTER_AREA)
             # query_rgb = (query_rgb.astype('float32') / 255.)
@@ -363,7 +369,11 @@ if __name__ == "__main__":
                             anchors = np.append(anchors, tmp_anchor)
                 elif anchor_select_policy == "conv_filter":
                     print("==> anchor_select_policy: conv_filter")
-                    pass
+                    # randomly select 64 points from edges_query where the value is not 0
+                    edges_query = np.reshape(edges_query, -1)
+                    filtered_args = np.argwhere(edges_query != 0)
+                    edges_query = np.random.choice(filtered_args, 64, replace=False)
+                    anchor = np.reshape(cache_table[edges_query], -1)
                 else:
                     raise ValueError(
                         "anchor_select_policy should be one of [largest_score, random, conv_filter]"
