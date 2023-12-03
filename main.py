@@ -308,29 +308,26 @@ if __name__ == "__main__":
         for query in tqdm(range(total_query_imgs), ncols=100):
             # print('==> Query: ' + str(query + query_index_offset))
             try:
-                query_img = cv2.imread(
+                query_ori = cv2.imread(
                     query_dir + get_query_img_name(dataset, query + query_index_offset),
                     0,
                 )
                 # query_rgb = cv2.imread(query_dir + get_query_img_name(dataset, query + query_index_offset))
 
             except (IOError, ValueError) as e:
-                query_img = None
+                query_ori = None
                 print("Exception! \n \n \n \n")
 
             query_img = cv2.resize(
-                query_img, (resized_width, resized_height), interpolation=cv2.INTER_AREA
+                query_ori, (resized_width, resized_height), interpolation=cv2.INTER_AREA
             )
             query_img = query_img.astype("float32") / 255.0
             if anchor_select_policy == "conv_filter":
-                edges_query = cv2.Canny(query_img, 300, 1000, apertureSize=5)
+                edges_query = cv2.Canny(query_ori, 300, 1000, apertureSize=5)
                 # deresolution to 64 * 64
                 edges_query = cv2.resize(
                     edges_query, (32, 32), interpolation=cv2.INTER_AREA
                 )
-
-            # query_rgb = cv2.resize(query_rgb, (resized_width, resized_height), interpolation=cv2.INTER_AREA)
-            # query_rgb = (query_rgb.astype('float32') / 255.)
 
             query_encoding_timer_start = time.time()
             if opt.model == "pre-trained":
@@ -381,11 +378,14 @@ if __name__ == "__main__":
                     # randomly select 64 points from edges_query where the value is not 0
                     edges_query = np.reshape(edges_query, -1)
                     filtered_args = np.argwhere(edges_query != 0)
-                    edges_query = np.random.choice(filtered_args, 64, replace=False)
-                    anchor = np.reshape(cache_table[edges_query], -1)
+                    filtered_args = np.reshape(filtered_args, -1)
+                    if len(filtered_args) > 64:
+                        anchors = np.random.choice(filtered_args, 64, replace=False)
+                    else:
+                        anchors = np.random.choice(range(0, 32 * 32), 64, replace=False)
                 else:
                     raise ValueError(
-                        "anchor_select_policy should be one of [largest_score, random, conv_filter]"
+                        "anchor_select_policy for AttnPatch should be one of [largest_score, random, conv_filter]"
                     )
 
                 similarity.append(

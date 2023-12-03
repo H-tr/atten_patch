@@ -72,4 +72,4 @@ model:
   weights_path: 'pretrained_models/superpoint_v1.pth'
   cuda: True
   method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "random"  # ["random", "largest_score", "conv_filter"]
+  anchor_select_policy: "conv_filter"  # ["random", "largest_score", "conv_filter"], if method is FullGeomVeri, using "default"

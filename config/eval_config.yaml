@@ -4,6 +4,8 @@ dataset:
   query_dir: '/SPED/Test/query/'
   refer_dir: '/SPED/Test/ref/'
 
+results_path: 'outputs/'
+
 model:
   nms_dist: 4
   conf_thresh: 0.015
@@ -12,9 +14,9 @@ model:
   cuda: True
   
 output_1:
-  method: "FullGeomVeri" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "largest_score"  # ["random", "largest_score", "conv_filter"]
+  method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
+  anchor_select_policy: "random"  # ["random", "largest_score", "conv_filter", "default"]
 
 output_2:
-  method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "largest_score"  # ["random", "largest_score", "conv_filter"]
+  method: "FullGeomVeri" # ["AttnPatch", "FullGeomVeri"]
+  anchor_select_policy: "default" 

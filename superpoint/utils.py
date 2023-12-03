@@ -136,22 +136,21 @@ def print_and_store_result(
         print("==> Recall Rate @ [1, 20]: " + str(recall_rate_at_n))
 
     if config["store_result"] is True:
-        if os.path.exists(result_root + "result/" + dataset + "/" + method) is False:
-            os.makedirs(result_root + "result/" + dataset + "/" + method)
+        if os.path.exists(result_root + dataset + "/" + method) is False:
+            os.makedirs(result_root + dataset + "/" + method)
 
         if (
             os.path.exists(
-                result_root + "result/" + dataset + "/" + method + "/" + strategy
+                result_root + dataset + "/" + method + "/" + strategy
             )
             is False
         ):
             os.makedirs(
-                result_root + "result/" + dataset + "/" + method + "/" + strategy
+                result_root + dataset + "/" + method + "/" + strategy
             )
 
         with open(
             result_root
-            + "result/"
             + dataset
             + "/"
             + method
@@ -166,7 +165,6 @@ def print_and_store_result(
 
         with open(
             result_root
-            + "result/"
             + dataset
             + "/"
             + method
@@ -181,7 +179,6 @@ def print_and_store_result(
 
         with open(
             result_root
-            + "result/"
             + dataset
             + "/"
             + method
@@ -196,7 +193,6 @@ def print_and_store_result(
 
         with open(
             result_root
-            + "result/"
             + dataset
             + "/"
             + method
@@ -211,7 +207,6 @@ def print_and_store_result(
 
         with open(
             result_root
-            + "result/"
             + dataset
             + "/"
             + method
@@ -284,7 +279,6 @@ def print_and_store_result(
         print(
             "==> Results are saved at "
             + result_root
-            + "result/"
             + dataset
             + "/"
             + method
@@ -323,11 +317,11 @@ def print_and_store_result_ii(
         print("Recall Rate @ [1, 20]: " + str(recall_rate_at_n))
 
     if config["store_result"] is True:
-        if os.path.exists(sp_root + "result/" + dataset_name) is False:
-            os.mkdir(sp_root + "result/" + dataset_name)
+        if os.path.exists(sp_root + dataset_name) is False:
+            os.mkdir(sp_root + dataset_name)
 
         with open(
-            sp_root + "result/" + dataset_name + "/result_" + method + ".txt", "w"
+            sp_root + dataset_name + "/result_" + method + ".txt", "w"
         ) as f:
             f.writelines(
                 "Precision @ 100% Recall: "
