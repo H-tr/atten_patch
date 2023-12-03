@@ -140,23 +140,13 @@ def print_and_store_result(
             os.makedirs(result_root + dataset + "/" + method)
 
         if (
-            os.path.exists(
-                result_root + dataset + "/" + method + "/" + strategy
-            )
+            os.path.exists(result_root + dataset + "/" + method + "/" + strategy)
             is False
         ):
-            os.makedirs(
-                result_root + dataset + "/" + method + "/" + strategy
-            )
+            os.makedirs(result_root + dataset + "/" + method + "/" + strategy)
 
         with open(
-            result_root
-            + dataset
-            + "/"
-            + method
-            + "/"
-            + strategy
-            + "/similarity",
+            result_root + dataset + "/" + method + "/" + strategy + "/similarity",
             "wb",
         ) as fp:
             pickle.dump(similarity, fp)
@@ -192,13 +182,7 @@ def print_and_store_result(
         print("==> Sorted prediction saved.")
 
         with open(
-            result_root
-            + dataset
-            + "/"
-            + method
-            + "/"
-            + strategy
-            + "/failed_cases",
+            result_root + dataset + "/" + method + "/" + strategy + "/failed_cases",
             "wb",
         ) as fp:
             pickle.dump(failed_cases, fp)
@@ -206,13 +190,7 @@ def print_and_store_result(
         print("==> Failed cases saved.")
 
         with open(
-            result_root
-            + dataset
-            + "/"
-            + method
-            + "/"
-            + strategy
-            + "/result.txt",
+            result_root + dataset + "/" + method + "/" + strategy + "/result.txt",
             "w",
         ) as f:
             f.writelines("Dataset: " + dataset + "\n")
@@ -320,9 +298,7 @@ def print_and_store_result_ii(
         if os.path.exists(sp_root + dataset_name) is False:
             os.mkdir(sp_root + dataset_name)
 
-        with open(
-            sp_root + dataset_name + "/result_" + method + ".txt", "w"
-        ) as f:
+        with open(sp_root + dataset_name + "/result_" + method + ".txt", "w") as f:
             f.writelines(
                 "Precision @ 100% Recall: "
                 + str(np.sum(matches) / total_query_imgs)
