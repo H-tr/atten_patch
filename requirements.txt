@@ -1,11 +1,14 @@
-opencv-python
 numpy
-PyYAML
 tqdm
-scikit-learn
+ftfy
 scipy
+regex
+PyYAML
+openmim
+torchaudio
+scikit-learn
+opencv-python
+mmsegmentation>=1.0.0
 --extra-index-url https://download.pytorch.org/whl/cu121
 torch 
-torchvision 
-torchaudio
-openmim
+torchvision

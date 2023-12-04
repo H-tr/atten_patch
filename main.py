@@ -331,10 +331,17 @@ if __name__ == "__main__":
 
             query_encoding_timer_start = time.time()
             if opt.model == "pre-trained":
-                desc = fe.run(query_img)
+                if anchor_select_policy == "keypoint":
+                    keypoints, desc = fe.run_with_point(query_img)
+                else:
+                    desc = fe.run(query_img)
             else:
-                with torch.no_grad():
-                    desc = val_agent.run(query_img)
+                if anchor_select_policy == "keypoint":
+                    with torch.no_grad():
+                        desc, keypoints = val_agent.run_with_point(query_img)
+                else:
+                    with torch.no_grad():
+                        desc = val_agent.run(query_img)
             query_encoding_time += time.time() - query_encoding_timer_start
 
             matching_timer_starter = time.time()
@@ -383,9 +390,14 @@ if __name__ == "__main__":
                         anchors = np.random.choice(filtered_args, 64, replace=False)
                     else:
                         anchors = np.random.choice(range(0, 32 * 32), 64, replace=False)
+                elif anchor_select_policy == "keypoint":
+                    keypoints = keypoints[:, :2]
+                    keypoints = [[item / 32 for item in subl] for subl in keypoints]
+                    keypoints = [list(t) for t in set(tuple(element) for element in keypoints)]
+                    anchors = np.array([idx_table[int(item[0]), int(item[1])] for item in keypoints])
                 else:
                     raise ValueError(
-                        "anchor_select_policy for AttnPatch should be one of [largest_score, random, conv_filter]"
+                        "anchor_select_policy for AttnPatch should be one of [largest_score, random, conv_filter, keypoint]"
                     )
 
                 similarity.append(

@@ -66,10 +66,10 @@ output_path: 'outputs/'
 front_end_model: 'Val_model_heatmap'  # 'Train_model_frontend'
 
 model:
-  nms_dist: 4
-  conf_thresh: 0.015
-  nn_thresh: 0.7
-  weights_path: 'pretrained_models/superpoint_v1.pth'
   cuda: True
+  nms_dist: 4
+  nn_thresh: 0.7
+  conf_thresh: 0.015
+  weights_path: 'pretrained_models/superpoint_v1.pth'
   method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "conv_filter"  # ["random", "largest_score", "conv_filter"], if method is FullGeomVeri, using "default"
+  anchor_select_policy: "keypoint"  # ["random", "largest_score", "conv_filter", "keypoint"], if method is FullGeomVeri, using "default"

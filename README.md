@@ -21,9 +21,14 @@ cd atten_patch
 pip install -r requirements.txt
 ```
 
+You can install the pretrained models and checkpoints into pretrained_models
+```bash
+mim download mmsegmentation --config pspnet_r50-d8_4xb2-40k_cityscapes-512x1024 --dest pretrained_models
+```
+
 This will install all necessary dependencies for the project.
 
-3. **Configuration:** You can configurate the project in `config`.
+1. **Configuration:** You can configurate the project in `config`.
 
 ## Usage
 Evaluate on SPED dataset:
