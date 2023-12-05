@@ -218,20 +218,20 @@ class SuperPointFrontend(object):
         desc = coarse_desc.data.cpu().numpy().reshape(D, -1)
         desc /= np.linalg.norm(desc, axis=0)[np.newaxis, :]
         return desc
-      
+
     def run_with_point(self, img):
-        """ Process a numpy image to extract points and descriptors.
+        """Process a numpy image to extract points and descriptors.
         Input
           img - HxW numpy float32 input image in range [0,1].
         Output
           corners - 3xN numpy array with corners [x_i, y_i, confidence_i]^T.
           desc - 256xN numpy array of corresponding unit normalized descriptors.
-          """
-        assert img.ndim == 2, 'Image must be grayscale.'
-        assert img.dtype == np.float32, 'Image must be float32.'
+        """
+        assert img.ndim == 2, "Image must be grayscale."
+        assert img.dtype == np.float32, "Image must be float32."
         H, W = img.shape[0], img.shape[1]
         inp = img.copy()
-        inp = (inp.reshape(1, H, W))
+        inp = inp.reshape(1, H, W)
         inp = torch.from_numpy(inp)
         inp = torch.autograd.Variable(inp).view(1, 1, H, W)
         if self.cuda:
@@ -243,7 +243,7 @@ class SuperPointFrontend(object):
         semi = semi.data.cpu().numpy().squeeze()
         # --- Process points.
         dense = np.exp(semi)  # Softmax.
-        dense = dense / (np.sum(dense, axis=0) + .00001)  # Should sum to 1.
+        dense = dense / (np.sum(dense, axis=0) + 0.00001)  # Should sum to 1.
         # Remove dustbin.
         nodust = dense[:-1, :, :]
         # Reshape to get full resolution heatmap.

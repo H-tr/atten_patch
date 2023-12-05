@@ -1,0 +1,30 @@
+import numpy as np
+
+threshold = 0.55
+reproj_err = 3
+params = [threshold, reproj_err]
+
+query_index_offset = 0
+refer_index_offset = 0
+
+query_descriptors = []
+refer_descriptors = []
+
+pos_ptr = np.array(
+    [
+        [-99, -98, -97, -96, -95, -94, -93],
+        [-67, -66, -65, -64, -63, -62, -61],
+        [-35, -34, -33, -32, -31, -30, -29],
+        [-3, -2, -1, 0, 1, 2, 3],
+        [29, 30, 31, 32, 33, 34, 35],
+        [61, 62, 63, 64, 65, 66, 67],
+        [93, 94, 95, 96, 97, 98, 99],
+    ]
+)
+
+idx_table = np.reshape(np.array([val for val in range(0, 32 * 32)]), (32, 32))
+cache_table = np.zeros((1024, 2), dtype=int)
+for cnt in range(1024):
+    ridx = int(cnt / 32)
+    cidx = int(cnt % 32)
+    cache_table[cnt] = np.array([ridx, cidx])
