@@ -256,7 +256,7 @@ if __name__ == "__main__":
                 elif anchor_select_policy == "keypoint":
                     keypoints = keypoints[:2, :]
                     keypoints = keypoints.transpose()
-                    keypoints = [[item // 32 for item in subl] for subl in keypoints]
+                    keypoints = [[item // 8 for item in subl] for subl in keypoints]
                     keypoints = [
                         list(t) for t in set(tuple(element) for element in keypoints)
                     ]
