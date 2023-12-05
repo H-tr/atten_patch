@@ -52,7 +52,7 @@ import torch
 import pickle
 
 from tqdm import tqdm
-from utils import globals
+from utils import utils
 from utils.matching import adaptive_spatial_matching, geometry_verification
 from superpoint.superpoint import SuperPointFrontend
 from superpoint.utils import (
@@ -60,6 +60,9 @@ from superpoint.utils import (
     get_refer_img_name,
     print_and_store_result,
 )
+
+query_descriptors = []
+refer_descriptors = []
 
 # Stub to warn about opencv version.
 if int(cv2.__version__[0]) < 3:  # pragma: no cover
@@ -133,9 +136,7 @@ if __name__ == "__main__":
                 try:
                     refer_img = cv2.imread(
                         refer_dir
-                        + get_refer_img_name(
-                            dataset, refer + globals.refer_index_offset
-                        ),
+                        + get_refer_img_name(dataset, refer + utils.refer_index_offset),
                         0,
                     )
                     # refer_rgb = cv2.imread(refer_dir + get_refer_img_name(dataset, refer+refer_index_offset))
@@ -158,7 +159,7 @@ if __name__ == "__main__":
                     with torch.no_grad():
                         desc = val_agent.run(refer_img)
 
-                globals.refer_descriptors.append(desc)
+                refer_descriptors.append(desc)
                 refer_encoding_time += time.time() - refer_encoding_timer_start
 
         query_encoding_time = 0
@@ -171,7 +172,7 @@ if __name__ == "__main__":
             try:
                 query_ori = cv2.imread(
                     query_dir
-                    + get_query_img_name(dataset, query + globals.query_index_offset),
+                    + get_query_img_name(dataset, query + utils.query_index_offset),
                     0,
                 )
                 # query_rgb = cv2.imread(query_dir + get_query_img_name(dataset, query + query_index_offset))
@@ -225,7 +226,7 @@ if __name__ == "__main__":
                                 ]
                             )
                             tmp_anchor = np.reshape(
-                                globals.idx_table[
+                                utils.idx_table[
                                     (4 * row) : (4 * (row + 1)),
                                     (4 * col) : (4 * (col + 1)),
                                 ],
@@ -236,7 +237,7 @@ if __name__ == "__main__":
                     for row in range(8):
                         for col in range(8):
                             tmp_anchor = np.reshape(
-                                globals.idx_table[
+                                utils.idx_table[
                                     (4 * row) : (4 * (row + 1)),
                                     (4 * col) : (4 * (col + 1)),
                                 ],
@@ -253,14 +254,15 @@ if __name__ == "__main__":
                     else:
                         anchors = np.random.choice(range(0, 32 * 32), 64, replace=False)
                 elif anchor_select_policy == "keypoint":
-                    keypoints = keypoints[:, :2]
-                    keypoints = [[item / 32 for item in subl] for subl in keypoints]
+                    keypoints = keypoints[:2, :]
+                    keypoints = keypoints.transpose()
+                    keypoints = [[item // 32 for item in subl] for subl in keypoints]
                     keypoints = [
                         list(t) for t in set(tuple(element) for element in keypoints)
                     ]
                     anchors = np.array(
                         [
-                            globals.idx_table[int(item[0]), int(item[1])]
+                            utils.idx_table[int(item[0]), int(item[1])]
                             for item in keypoints
                         ]
                     )
@@ -289,6 +291,6 @@ if __name__ == "__main__":
             similarity,
             method,
             anchor_select_policy,
-            globals.params,
+            utils.params,
             20,
         )

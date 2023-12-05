@@ -2,29 +2,10 @@ import os
 import cv2
 import pickle
 import numpy as np
+from utils import utils
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from superpoint.utils import get_query_img_name, get_refer_img_name
-
-
-threshold = 0.55
-reproj_err = 3
-pos_ptr = np.array(
-    [
-        [-99, -98, -97, -96, -95, -94, -93],
-        [-67, -66, -65, -64, -63, -62, -61],
-        [-35, -34, -33, -32, -31, -30, -29],
-        [-3, -2, -1, 0, 1, 2, 3],
-        [29, 30, 31, 32, 33, 34, 35],
-        [61, 62, 63, 64, 65, 66, 67],
-        [93, 94, 95, 96, 97, 98, 99],
-    ]
-)
-cache_table = np.zeros((1024, 2), dtype=int)
-for cnt in range(1024):
-    ridx = int(cnt / 32)
-    cidx = int(cnt % 32)
-    cache_table[cnt] = np.array([ridx, cidx])
 
 
 def read_failed_cases(path):
@@ -154,7 +135,7 @@ def visual_atten(
     score_max_vector = np.max(score_matrix, axis=1)
     where_max_matrix = np.argmax(score_matrix, axis=1)
 
-    where = [idx for idx, val in enumerate(score_max_vector) if val > threshold]
+    where = [idx for idx, val in enumerate(score_max_vector) if val > utils.threshold]
     query_where = anchors_in[where]
     refer_where = where_max_matrix[where]
 
@@ -162,8 +143,8 @@ def visual_atten(
     refer_pos = np.array([], dtype=int)
 
     for cnt in range(query_where.shape[0]):
-        query_pos = np.append(query_pos, query_where[cnt] + pos_ptr)
-        refer_pos = np.append(refer_pos, refer_where[cnt] + pos_ptr)
+        query_pos = np.append(query_pos, query_where[cnt] + utils.pos_ptr)
+        refer_pos = np.append(refer_pos, refer_where[cnt] + utils.pos_ptr)
 
     qpos_idx = np.where(query_pos >= 0)
     query_pos = query_pos[qpos_idx]
@@ -185,7 +166,7 @@ def visual_atten(
     refer_rois = refer_descriptor_in.T[refer_roi]
 
     mul_score = np.sum(np.multiply(query_rois, refer_rois), axis=1)
-    select_roi_idx = np.where(mul_score > threshold)
+    select_roi_idx = np.where(mul_score > utils.threshold)
     query_roi = query_roi[select_roi_idx]
     refer_roi = refer_roi[select_roi_idx]
     _, unique_indices, _, _ = np.unique(
@@ -194,14 +175,17 @@ def visual_atten(
     query_roi = query_roi[unique_indices]
     refer_roi = refer_roi[unique_indices]
 
-    query_2d_idx = cache_table[query_roi]
-    refer_2d_idx = cache_table[refer_roi]
+    query_2d_idx = utils.cache_table[query_roi]
+    refer_2d_idx = utils.cache_table[refer_roi]
 
     score = 0
 
     if query_2d_idx.shape[0] > 3:
         _, mask = cv2.findHomography(
-            refer_2d_idx, query_2d_idx, cv2.FM_RANSAC, ransacReprojThreshold=reproj_err
+            refer_2d_idx,
+            query_2d_idx,
+            cv2.FM_RANSAC,
+            ransacReprojThreshold=utils.reproj_err,
         )
 
         inlier_index_keypoints = refer_2d_idx[mask.ravel() == 1]
