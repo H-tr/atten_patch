@@ -39,7 +39,7 @@ class Segmentor:
         self.checkpoint_file = checkpoint_file
         self.save_dir = save_dir
         self.fig_show_cfg=dict(frameon=False)
-        if not os.path.exists(self.save_dir):
+        if self.save_dir is not None and not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         self.device = device
         self.model = init_model(self.config_file, self.checkpoint_file, device=self.device)
@@ -141,23 +141,48 @@ class Segmentor:
         self.checkpoint_file = checkpoint_file
         self.model = init_model(self.config_file, self.checkpoint_file, device=self.device)
 
-    def inference(self, img, display: bool = False):
+    def inference(self, img, display: bool = False) -> SegDataSample:
         """Perform inference on an input image.
 
         Args:
             img: Input image for inference.
             display (bool, optional): Whether to display the segmentation results. Defaults to False.
 
+        Returns:
+            SegDataSample: Segmentation result.
+            
         """
         result = inference_model(self.model, img)
-        # append img name to save_dir
-        out_file = os.path.join(self.save_dir, img.split("/")[-1])
-        # visualize the results in a new window
-        # you can change the opacity of the painted segmentation map in (0, 1].
-        self.get_result(
-            img, result, show=display, out_file=out_file, opacity=0.5
-        )
+        
+        if self.save_dir is not None:
+            # append img name to save_dir
+            out_file = os.path.join(self.save_dir, img.split("/")[-1])
+            # visualize the results in a new window
+            # you can change the opacity of the painted segmentation map in (0, 1].
+            
+            self.get_result(
+                img, result, show=display, out_file=out_file, opacity=0.5
+            )
         # test a video and show the results
+        return result
+    
+    def mask(self, result: SegDataSample) -> np.ndarray:
+        """Make all the dynamic classes values to 0 and rest to 1.
+
+        Args:
+            result (SegDataSample): The segmentation result.
+
+        Returns:
+            np.ndarray: The masked segmentation map.
+            
+        """
+        result = result.pred_sem_seg.cpu().data
+        result = result[0]
+        mask = np.zeros_like(result, dtype=np.uint8)
+        mask[:, :] = 1
+        for label in Segmentor.dynamic_classes():
+            mask[result == label] = 0
+        return mask
     
     def get_result(
         self,

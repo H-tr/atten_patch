@@ -54,6 +54,7 @@ import pickle
 from tqdm import tqdm
 from utils import utils
 from utils.matching import adaptive_spatial_matching, geometry_verification
+from segmentation.inference import Segmentor
 from superpoint.superpoint import SuperPointFrontend
 from superpoint.utils import (
     get_query_img_name,
@@ -100,6 +101,10 @@ if __name__ == "__main__":
     cuda = config["model"]["cuda"]
     method = config["model"]["method"]
     anchor_select_policy = config["model"]["anchor_select_policy"]
+    seg_config_file = config["model"]["seg_config_file"]
+    seg_checkpoint_file = config["model"]["seg_checkpoint_file"]
+    
+    segmentor = Segmentor(seg_config_file, seg_checkpoint_file)
 
     if opt.prediction_path is not None:
         predictions = pickle.load(open(opt.prediction_path, "rb"))
@@ -266,9 +271,24 @@ if __name__ == "__main__":
                             for item in keypoints
                         ]
                     )
+                elif anchor_select_policy == "segmentation":
+                    img = get_query_img_name(dataset, query + utils.query_index_offset)
+                    img = query_dir + img
+                    result = segmentor.inference(img)
+                    mask = segmentor.mask(result)
+                    # Deresolution the mask to 32 * 32
+                    mask = cv2.resize(mask, (32, 32), interpolation=cv2.INTER_AREA)
+                    # Get the values from utils.idx_table for the pixels where mask is 1
+                    mask = np.reshape(mask, -1)
+                    filtered_args = np.argwhere(mask == 1)
+                    filtered_args = np.reshape(filtered_args, -1)
+                    if len(filtered_args) > 64:
+                        anchors = np.random.choice(filtered_args, 64, replace=False)
+                    else:
+                        anchors = np.random.choice(range(0, 32 * 32), 64, replace=False)
                 else:
                     raise ValueError(
-                        "anchor_select_policy for AttnPatch should be one of [largest_score, random, conv_filter, keypoint]"
+                        "anchor_select_policy for AttnPatch should be one of [largest_score, random, conv_filter, keypoint, segmentation]"
                     )
 
                 similarity.append(

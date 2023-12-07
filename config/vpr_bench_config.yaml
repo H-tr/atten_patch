@@ -72,4 +72,6 @@ model:
   conf_thresh: 0.015
   weights_path: 'pretrained_models/superpoint_v1.pth'
   method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "keypoint"  # ["random", "largest_score", "conv_filter", "keypoint"], if method is FullGeomVeri, using "default"
+  anchor_select_policy: "segmentation"  # ["random", "largest_score", "conv_filter", "keypoint, "segmentation"], if method is FullGeomVeri, using "default"
+  seg_config_file: "pretrained_models/segformer_mit-b4_8xb2-160k_ade20k-512x512.py"
+  seg_checkpoint_file: "pretrained_models/segformer_mit-b4_512x512_160k_ade20k_20210728_183055-7f509d7d.pth"
