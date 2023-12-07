@@ -23,7 +23,7 @@ pip install -r requirements.txt
 
 You can install the pretrained models and checkpoints into pretrained_models
 ```bash
-mim download mmsegmentation --config pspnet_r50-d8_4xb2-40k_cityscapes-512x1024 --dest pretrained_models
+mim download mmsegmentation --config segformer_mit-b4_8xb2-160k_ade20k-512x512 --dest pretrained_models
 ```
 
 This will install all necessary dependencies for the project.
