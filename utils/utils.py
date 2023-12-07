@@ -7,9 +7,6 @@
 
 import numpy as np
 import torch
-from pathlib import Path
-import torch.nn.functional as F
-import torch.nn as nn
 
 threshold = 0.55
 reproj_err = 3

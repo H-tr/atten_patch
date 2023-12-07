@@ -1,4 +1,5 @@
 import os
+
 import cv2
 import mmcv
 import torch
@@ -10,16 +11,34 @@ from mmseg.apis import inference_model, init_model
 
 
 class Segmentor:
+    """Segmentor class for performing semantic segmentation using a pre-trained model.
+
+    Args:
+        config_file (str): Path to the model's configuration file.
+        checkpoint_file (str): Path to the model's checkpoint file.
+        save_dir (str, optional): Directory to save the segmentation results. Defaults to None.
+        device (str, optional): Device to use for inference (e.g., "cuda:0" for GPU). Defaults to "cuda:0".
+
+    Attributes:
+        config_file (str): Path to the model's configuration file.
+        checkpoint_file (str): Path to the model's checkpoint file.
+        save_dir (str): Directory to save the segmentation results.
+        device (str): Device to use for inference.
+        model: Initialized segmentation model.
+
+    """
+
     def __init__(
         self,
         config_file: str,
         checkpoint_file: str,
-        save_dir: str = "outputs/segmentation",
+        save_dir: str = None,
         device: str = "cuda:0",
     ) -> None:
         self.config_file = config_file
         self.checkpoint_file = checkpoint_file
         self.save_dir = save_dir
+        self.fig_show_cfg=dict(frameon=False)
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         self.device = device
@@ -107,21 +126,36 @@ class Segmentor:
         
     @staticmethod
     def dynamic_classes():
+        """Get the list of dynamic classes for masking."""
         return [2, 12, 43, 76, 80, 83, 90, 92, 98, 99, 102, 103, 107, 108, 110, 111, 112, 114, 115, 116, 117, 118, 119, 120, 122, 124, 125, 126, 127, 129, 133, 134, 135, 138, 139, 142, 147]
 
     def set_model(self, config_file: str, checkpoint_file: str):
+        """Set the model with new configuration and checkpoint files.
+
+        Args:
+            config_file (str): Path to the new model's configuration file.
+            checkpoint_file (str): Path to the new model's checkpoint file.
+
+        """
         self.config_file = config_file
         self.checkpoint_file = checkpoint_file
         self.model = init_model(self.config_file, self.checkpoint_file, device=self.device)
 
     def inference(self, img, display: bool = False):
+        """Perform inference on an input image.
+
+        Args:
+            img: Input image for inference.
+            display (bool, optional): Whether to display the segmentation results. Defaults to False.
+
+        """
         result = inference_model(self.model, img)
         # append img name to save_dir
         out_file = os.path.join(self.save_dir, img.split("/")[-1])
         # visualize the results in a new window
         # you can change the opacity of the painted segmentation map in (0, 1].
         self.get_result(
-            self.model, img, result, show=display, out_file=out_file, opacity=0.5
+            img, result, show=display, out_file=out_file, opacity=0.5
         )
         # test a video and show the results
     
@@ -129,11 +163,20 @@ class Segmentor:
         self,
         img: str,
         result: SegDataSample,
-        opacity: float = 0.5,
         show: bool = False,
-        out_file: str = None
+        out_file: str = None,
+        opacity: float = 0.5
     ):
-        """Musk the dynamic classes and visualize the results."""
+        """Mask the dynamic classes and visualize the results.
+
+        Args:
+            img (str): Path to the input image.
+            result (SegDataSample): Segmentation result.
+            show (bool, optional): Whether to display the segmentation results. Defaults to False.
+            out_file (str, optional): Path to save the segmentation result. Defaults to None.
+            opacity (float, optional): Opacity of the painted segmentation map. Defaults to 0.5.
+
+        """
         image = mmcv.imread(img, channel_order='rgb')
         classes = Segmentor.ade_classes()
         dynamic_classes = Segmentor.dynamic_classes()
@@ -144,13 +187,20 @@ class Segmentor:
             dynamic_classes,
             opacity
         )
-        mmcv.imwrite(mmcv.rgb2bgr(pred_img_data), out_file)
+        if self.save_dir is not None:
+            mmcv.imwrite(mmcv.rgb2bgr(pred_img_data), out_file)
+        if show:
+            self.show(pred_img_data)
         
     def _get_center_loc(self, mask: np.ndarray) -> np.ndarray:
-        """Get semantic seg center coordinate.
+        """Get the center coordinate of the semantic segmentation.
 
         Args:
-            mask: np.ndarray: get from sem_seg
+            mask (np.ndarray): Semantic segmentation mask.
+
+        Returns:
+            np.ndarray: Center coordinate of the semantic segmentation.
+
         """
         loc = np.argwhere(mask == 1)
 
@@ -173,6 +223,19 @@ class Segmentor:
         dynamic_classes: None | list,
         opacity: float = 0.5,
     ):
+        """Draw the semantic segmentation on the input image.
+
+        Args:
+            image (np.ndarray): Input image.
+            sem_seg (PixelData): Semantic segmentation result.
+            classes (None | list): List of class names.
+            dynamic_classes (None | list): List of dynamic classes for masking.
+            opacity (float, optional): Opacity of the painted segmentation map. Defaults to 0.5.
+
+        Returns:
+            np.ndarray: Image with the painted segmentation map.
+
+        """
         num_classes = len(classes)
         sem_seg = sem_seg.cpu().data
         ids = np.unique(sem_seg)[::-1]
@@ -226,6 +289,25 @@ class Segmentor:
                                 lineType)
         color_seg = (image * (1 - opacity) + mask * opacity).astype(np.uint8)
         return color_seg
+    
+    def _init_manager(self, win_name: str) -> None:
+        """Initialize the matplot manager.
+
+        Args:
+            win_name (str): The window name.
+        """
+        from matplotlib.figure import Figure
+        from matplotlib.pyplot import new_figure_manager
+        if getattr(self, 'manager', None) is None:
+            self.manager = new_figure_manager(
+                num=1, FigureClass=Figure, **self.fig_show_cfg)
+
+        try:
+            self.manager.set_window_title(win_name)
+        except Exception:
+            self.manager = new_figure_manager(
+                num=1, FigureClass=Figure, **self.fig_show_cfg)
+            self.manager.set_window_title(win_name)
         
     def show(self,
              drawn_img: None | np.ndarray,
