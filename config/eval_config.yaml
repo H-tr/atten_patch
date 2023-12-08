@@ -5,6 +5,8 @@ dataset:
   refer_dir: '/SPED/Test/ref/'
 
 results_path: 'outputs/'
+seg_config_file: "pretrained_models/segformer_mit-b4_8xb2-160k_ade20k-512x512.py"
+seg_checkpoint_file: "pretrained_models/segformer_mit-b4_512x512_160k_ade20k_20210728_183055-7f509d7d.pth"
 
 model:
   nms_dist: 4
@@ -15,7 +17,7 @@ model:
   
 output_1:
   method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "conv_filter"  # ["random", "largest_score", "conv_filter"]
+  anchor_select_policy: "segmentation"  # ["random", "largest_score", "conv_filter"]
 
 output_2:
   method: "FullGeomVeri" # ["AttnPatch", "FullGeomVeri"]
