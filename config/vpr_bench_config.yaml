@@ -1,54 +1,47 @@
 Dataset:
-  Root: '/mnt/d/Datasets'
+  Root: '/mnt/d/Datasets/VPR-Bench-Datasets'
 
   Nordland:
     path: '/Nordland/'
-    query_dir: '/Nordland/Test/query/'
-    refer_dir: '/Nordland/Test/ref/'
+    query_dir: '/Nordland/query/'
+    refer_dir: '/Nordland/ref/'
     total_query_imgs: 2760
     total_refer_imgs: 27592
 
   Pittsburgh:
-    path: '/Pittsburgh/'
-    query_dir: '/Pittsburgh/Test/query/'
-    refer_dir: '/Pittsburgh/Test/ref/'
+    path: '/Pittsburgh-Query/'
+    query_dir: '/Pittsburgh-Query/query/'
+    refer_dir: '/Pittsburgh-Query/ref/'
     total_query_imgs: 1000
     total_refer_imgs: 23000
 
   CrossSeasons:
     path: '/Cross_Seasons/'
-    query_dir: '/Cross_Seasons/Test/query/'
-    refer_dir: '/Cross_Seasons/Test/ref/'
+    query_dir: '/Cross_Seasons/query/'
+    refer_dir: '/Cross_Seasons/ref/'
     total_query_imgs: 191
     total_refer_imgs: 191
 
   SPED:
-    path: '/SPED/'
-    query_dir: '/SPED/Test/query/'
-    refer_dir: '/SPED/Test/ref/'
+    path: '/SPEDTEST/'
+    query_dir: '/SPEDTEST/query/'
+    refer_dir: '/SPEDTEST/ref/'
     total_query_imgs: 607
     total_refer_imgs: 607
 
   Gardens:
     path: '/Gardens/'
-    query_dir: '/Gardens/day_right/'
-    refer_dir: '/Gardens/night_right/'
+    query_dir: '/Gardens/query/'
+    refer_dir: '/Gardens/ref/'
     total_query_imgs: 200
     total_refer_imgs: 200
 
   ESSEX3IN1:
     path: '/ESSEX3IN1/'
-    query_dir: '/ESSEX3IN1/Test/query/'
-    refer_dir: '/ESSEX3IN1/Test/ref/'
+    query_dir: '/ESSEX3IN1/query/'
+    refer_dir: '/ESSEX3IN1/ref/'
     total_query_imgs: 210
     total_refer_imgs: 210
-
-  Test:
-    path: '/media/dszhang/DATA1/VPR/Nordland/Test/'
-    query_dir: '/Test/'
-    refer_dir: '/Test/'
-    total_query_imgs: 4
-    total_refer_imgs: 4
 
 resized_width: 256
 resized_height: 256
@@ -57,9 +50,6 @@ print_runtime: True
 print_precision: True
 print_failed: True
 store_result: True
-
-SuperPoint:
-  Root: '/home/run/Data/Datasets/'
 
 output_path: 'outputs/'
 
@@ -71,7 +61,7 @@ model:
   nn_thresh: 0.7
   conf_thresh: 0.015
   weights_path: 'pretrained_models/superpoint_v1.pth'
-  method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
+  method: "FullGeomVeri" # ["AttnPatch", "FullGeomVeri"]
   anchor_select_policy: "segmentation"  # ["random", "largest_score", "conv_filter", "keypoint, "segmentation"], if method is FullGeomVeri, using "default"
   seg_config_file: "pretrained_models/segformer_mit-b4_8xb2-160k_ade20k-512x512.py"
   seg_checkpoint_file: "pretrained_models/segformer_mit-b4_512x512_160k_ade20k_20210728_183055-7f509d7d.pth"

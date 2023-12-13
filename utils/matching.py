@@ -82,10 +82,10 @@ def adaptive_spatial_matching(query_descriptor, refer_descriptors, anchors):
     return scores
 
 
-def geometry_verification(q_desc, r_descs):
-    similarity_score = np.zeros(utils.total_refer_imgs)
+def geometry_verification(q_desc, r_descs, total_refer_imgs):
+    similarity_score = np.zeros(total_refer_imgs)
     if q_desc is not None:
-        for refer in range(utils.total_refer_imgs):
+        for refer in range(total_refer_imgs):
             # print('==> Query ' + str(query) + ' is matching ' + 'reference ' + str(refer))
             if r_descs[refer] is not None:
                 score_matrix = np.dot(q_desc.transpose(), r_descs[refer])

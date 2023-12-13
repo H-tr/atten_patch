@@ -51,6 +51,9 @@ import yaml
 import torch
 import pickle
 
+import warnings
+warnings.filterwarnings("ignore")
+
 from tqdm import tqdm
 from utils import utils
 from utils.matching import adaptive_spatial_matching, geometry_verification
@@ -91,7 +94,6 @@ if __name__ == "__main__":
     dataset_dir = config["Dataset"]["Root"] + config["Dataset"][opt.dataset]["path"]
     resized_width = config["resized_width"]
     resized_height = config["resized_height"]
-    sp_root = config["SuperPoint"]["Root"]
 
     # model parameters
     weights_path = config["model"]["weights_path"]
@@ -295,7 +297,7 @@ if __name__ == "__main__":
                     adaptive_spatial_matching(desc, refer_descriptors, anchors)
                 )
             elif method == "FullGeomVeri":
-                similarity.append(geometry_verification(desc, refer_descriptors))
+                similarity.append(geometry_verification(desc, refer_descriptors, total_refer_imgs))
             else:
                 raise ValueError("method should be one of [AttnPatch, FullGeomVeri]")
             matching_time += time.time() - matching_timer_starter
