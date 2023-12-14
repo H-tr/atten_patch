@@ -49,12 +49,12 @@ import time
 import cv2
 import yaml
 import torch
+from rich.progress import track
 import pickle
 
 import warnings
 warnings.filterwarnings("ignore")
 
-from tqdm import tqdm
 from utils import utils
 from utils.matching import adaptive_spatial_matching, geometry_verification
 from segmentation.inference import Segmentor
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
             refer_encoding_time = 0
             print("==> Encoding References...")
-            for refer in tqdm(range(total_refer_imgs), ncols=100):
+            for refer in track(range(total_refer_imgs), description="Encoding References"):
                 # print('==> Refer: ' + str(refer + refer_index_offset))
                 try:
                     refer_img = cv2.imread(
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         similarity = []
         tmp_query_rois = []
         print("\n==> Matching...")
-        for query in tqdm(range(total_query_imgs), ncols=100):
+        for query in track(range(total_query_imgs), description="Matching"):
             # print('==> Query: ' + str(query + query_index_offset))
             try:
                 query_ori = cv2.imread(
@@ -298,6 +298,7 @@ if __name__ == "__main__":
                 )
             elif method == "FullGeomVeri":
                 similarity.append(geometry_verification(desc, refer_descriptors, total_refer_imgs))
+                anchor_select_policy = "default"
             else:
                 raise ValueError("method should be one of [AttnPatch, FullGeomVeri]")
             matching_time += time.time() - matching_timer_starter

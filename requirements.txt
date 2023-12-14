@@ -1,6 +1,8 @@
-numpy
 tqdm
+mmcv
 ftfy
+rich
+numpy
 scipy
 regex
 PyYAML
