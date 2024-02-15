@@ -1,4 +1,5 @@
 import math
+import cv2
 import torch
 import logging
 import numpy as np
@@ -15,7 +16,7 @@ from over_descriptor import util
 from over_descriptor import parser
 from over_descriptor import commons
 from over_descriptor import datasets_ws
-from model import network
+from over_descriptor.model import network
 
 torch.backends.cudnn.benchmark = True  # Provides a speedup
 #### Initial setup: parser, logging...
@@ -44,6 +45,8 @@ logging.info(f"Val set: {val_ds}")
 test_ds = datasets_ws.BaseDataset(args, args.datasets_folder, args.dataset_name, "test")
 logging.info(f"Test set: {test_ds}")
 
+args.features_dim = 256
+
 #### Initialize model
 model = network(
     weights_path="pretrained_models/superpoint_v1.pth",
@@ -56,69 +59,26 @@ model = network(
 model = torch.nn.DataParallel(model)
 
 #### Setup Optimizer and Loss
-if args.aggregation == "crn":
-    crn_params = list(model.module.aggregation.crn.parameters())
-    net_params = list(model.module.backbone.parameters()) + list(
-        [
-            m[1]
-            for m in model.module.aggregation.named_parameters()
-            if not m[0].startswith("crn")
-        ]
+if args.optim == "adam":
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+elif args.optim == "sgd":
+    optimizer = torch.optim.SGD(
+        model.parameters(), lr=args.lr, momentum=0.9, weight_decay=0.001
     )
-    if args.optim == "adam":
-        optimizer = torch.optim.Adam(
-            [
-                {"params": crn_params, "lr": args.lr_crn_layer},
-                {"params": net_params, "lr": args.lr_crn_net},
-            ]
-        )
-        logging.info("You're using CRN with Adam, it is advised to use SGD")
-    elif args.optim == "sgd":
-        optimizer = torch.optim.SGD(
-            [
-                {
-                    "params": crn_params,
-                    "lr": args.lr_crn_layer,
-                    "momentum": 0.9,
-                    "weight_decay": 0.001,
-                },
-                {
-                    "params": net_params,
-                    "lr": args.lr_crn_net,
-                    "momentum": 0.9,
-                    "weight_decay": 0.001,
-                },
-            ]
-        )
-else:
-    if args.optim == "adam":
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    elif args.optim == "sgd":
-        optimizer = torch.optim.SGD(
-            model.parameters(), lr=args.lr, momentum=0.9, weight_decay=0.001
-        )
 
 criterion_triplet = nn.TripletMarginLoss(margin=args.margin, p=2, reduction="sum")
 
 #### Resume model, optimizer, and other training parameters
 if args.resume:
-    if args.aggregation != "crn":
-        model, optimizer, best_r5, start_epoch_num, not_improved_num = (
-            util.resume_train(args, model, optimizer)
-        )
-    else:
-        # CRN uses pretrained NetVLAD, then requires loading with strict=False and
-        # does not load the optimizer from the checkpoint file.
-        model, _, best_r5, start_epoch_num, not_improved_num = util.resume_train(
-            args, model, strict=False
-        )
+    model, _, best_r5, start_epoch_num, not_improved_num = util.resume_train(
+        args, model, strict=False
+    )
     logging.info(
         f"Resuming from epoch {start_epoch_num} with best recall@5 {best_r5:.1f}"
     )
 else:
     best_r5 = start_epoch_num = not_improved_num = 0
 
-logging.info(f"Output dimension of the model is {args.features_dim}")
 
 #### Training loop
 for epoch_num in range(start_epoch_num, args.epochs_num):
@@ -157,7 +117,21 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
                 images = transforms.RandomHorizontalFlip()(images)
 
             # Compute features of all images (images contains queries, positives and negatives)
-            features = model(images.to(args.device))
+            features = []
+            for image in images:
+                grayscale_img = (
+                    0.2989 * image[0, :, :]
+                    + 0.5870 * image[1, :, :]
+                    + 0.1140 * image[2, :, :]
+                )
+                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                grayscale_img = cv2.resize(
+                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                )
+                feature = model(grayscale_img)
+                features.append(feature)
+            # Add one dimension to features
+            features = torch.stack(features)
             loss_triplet = 0
 
             if args.criterion == "triplet":
@@ -174,31 +148,6 @@ for epoch_num in range(start_epoch_num, args.epochs_num):
                         features[queries_indexes],
                         features[positives_indexes],
                         features[negatives_indexes],
-                    )
-            elif args.criterion == "sare_joint":
-                # sare_joint needs to receive all the negatives at once
-                triplet_index_batch = triplets_local_indexes.view(
-                    args.train_batch_size, 10, 3
-                )
-                for batch_triplet_index in triplet_index_batch:
-                    q = features[batch_triplet_index[0, 0]].unsqueeze(
-                        0
-                    )  # obtain query as tensor of shape 1xn_features
-                    p = features[batch_triplet_index[0, 1]].unsqueeze(
-                        0
-                    )  # obtain positive as tensor of shape 1xn_features
-                    n = features[
-                        batch_triplet_index[:, 2]
-                    ]  # obtain negatives as tensor of shape 10xn_features
-                    loss_triplet += criterion_triplet(q, p, n)
-            elif args.criterion == "sare_ind":
-                for triplet in triplets_local_indexes:
-                    # triplet is a 1-D tensor with the 3 scalars indexes of the triplet
-                    q_i, p_i, n_i = triplet
-                    loss_triplet += criterion_triplet(
-                        features[q_i : q_i + 1],
-                        features[p_i : p_i + 1],
-                        features[n_i : n_i + 1],
                     )
 
             del features

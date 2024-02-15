@@ -1,4 +1,5 @@
 import os
+import cv2
 import torch
 import faiss
 import logging
@@ -256,10 +257,12 @@ class TripletsDataset(BaseDataset):
             )
         # Remove queries without positives
         self.hard_positives_per_query = np.delete(
-            self.hard_positives_per_query, queries_without_any_hard_positive
+            np.array(self.hard_positives_per_query, dtype=object),
+            queries_without_any_hard_positive,
         )
         self.queries_paths = np.delete(
-            self.queries_paths, queries_without_any_hard_positive
+            np.array(self.queries_paths, dtype=object),
+            queries_without_any_hard_positive,
         )
 
         # Recompute images_paths and queries_num because some queries might have been removed
@@ -354,8 +357,22 @@ class TripletsDataset(BaseDataset):
         cache = RAMEfficient2DMatrix(cache_shape, dtype=np.float32)
         with torch.no_grad():
             for images, indexes in tqdm(subset_dl, ncols=100):
-                images = images.to(args.device)
-                features = model(images)
+                # Change images to grayscale
+                features = []
+                for image in images:
+                    grayscale_img = (
+                        0.2989 * image[0, :, :]
+                        + 0.5870 * image[1, :, :]
+                        + 0.1140 * image[2, :, :]
+                    )
+                    grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                    grayscale_img = cv2.resize(
+                        grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                    )
+                    feature = model(grayscale_img)
+                    features.append(feature)
+                # Add one dimension to features
+                features = torch.stack(features)
                 cache[indexes.numpy()] = features.cpu().numpy()
         return cache
 

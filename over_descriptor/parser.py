@@ -26,7 +26,7 @@ def parse_arguments():
         type=str,
         default="triplet",
         help="loss to be used",
-        choices=["triplet", "sare_ind", "sare_joint"],
+        choices=["triplet"],
     )
     parser.add_argument(
         "--margin", type=float, default=0.1, help="margin for the triplet loss"
@@ -108,22 +108,6 @@ def parse_arguments():
         help="When (and if) to apply the l2 norm with shallow aggregation layers",
     )
     parser.add_argument(
-        "--aggregation",
-        type=str,
-        default="netvlad",
-        choices=[
-            "netvlad",
-            "gem",
-            "spoc",
-            "mac",
-            "rmac",
-            "crn",
-            "rrm",
-            "cls",
-            "seqpool",
-        ],
-    )
-    parser.add_argument(
         "--netvlad_clusters",
         type=int,
         default=64,
@@ -172,7 +156,7 @@ def parse_arguments():
     # Other parameters
     parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"])
     parser.add_argument(
-        "--num_workers", type=int, default=8, help="num_workers for all dataloaders"
+        "--num_workers", type=int, default=0, help="num_workers for all dataloaders"
     )
     parser.add_argument(
         "--resize",
@@ -229,7 +213,7 @@ def parse_arguments():
     parser.add_argument(
         "--dataset_name",
         type=str,
-        default="pitts30k",
+        default="Pittsburgh250k",
         help="Relative path of the dataset",
     )
     parser.add_argument(
@@ -255,11 +239,6 @@ def parse_arguments():
                 + "the DATASETS_FOLDER environment variable as such \n"
                 + "export DATASETS_FOLDER=../datasets_vg/datasets"
             )
-
-    if args.aggregation == "crn" and args.resume is None:
-        raise ValueError(
-            "CRN must be resumed from a trained NetVLAD checkpoint, but you set resume=None."
-        )
 
     if args.queries_per_epoch % args.cache_refresh_rate != 0:
         raise ValueError(
@@ -300,31 +279,6 @@ def parse_arguments():
         if args.resize != [384, 384]:
             raise ValueError(
                 f"Image size for CCT384 must be 384, but it is {args.resize}"
-            )
-
-    if args.backbone in [
-        "alexnet",
-        "vgg16",
-        "resnet18conv4",
-        "resnet18conv5",
-        "resnet50conv4",
-        "resnet50conv5",
-        "resnet101conv4",
-        "resnet101conv5",
-    ]:
-        if args.aggregation in ["cls", "seqpool"]:
-            raise ValueError(
-                f"CNNs like {args.backbone} can't work with aggregation {args.aggregation}"
-            )
-    if args.backbone in ["cct384"]:
-        if args.aggregation in ["spoc", "mac", "rmac", "crn", "rrm"]:
-            raise ValueError(
-                f"CCT can't work with aggregation {args.aggregation}. Please use one among [netvlad, gem, cls, seqpool]"
-            )
-    if args.backbone == "vit":
-        if args.aggregation not in ["cls", "gem", "netvlad"]:
-            raise ValueError(
-                f"ViT can't work with aggregation {args.aggregation}. Please use one among [netvlad, gem, cls]"
             )
 
     return args

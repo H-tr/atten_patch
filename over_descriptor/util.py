@@ -1,3 +1,4 @@
+import cv2
 import torch
 import shutil
 import logging
@@ -6,7 +7,7 @@ from collections import OrderedDict
 from os.path import join
 from sklearn.decomposition import PCA
 
-import datasets_ws
+from over_descriptor import datasets_ws
 
 
 def save_checkpoint(args, state, is_best, filename):
@@ -64,7 +65,20 @@ def compute_pca(args, model, pca_dataset_folder, full_features_dim):
         for i, images in enumerate(dl):
             if i * args.infer_batch_size >= len(pca_features):
                 break
-            features = model(images).cpu().numpy()
+            for image in images:
+                grayscale_img = (
+                    0.2989 * image[0, :, :]
+                    + 0.5870 * image[1, :, :]
+                    + 0.1140 * image[2, :, :]
+                )
+                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                grayscale_img = cv2.resize(
+                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                )
+                feature = model(grayscale_img)
+                features.append(feature)
+            # Add one dimension to features
+            features = torch.stack(features)
             pca_features[
                 i * args.infer_batch_size : (i * args.infer_batch_size) + len(features)
             ] = features

@@ -1,3 +1,4 @@
+import cv2
 import faiss
 import torch
 import logging
@@ -25,13 +26,9 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
 
     with torch.no_grad():
         if test_method == "nearest_crop" or test_method == "maj_voting":
-            queries_features = np.ones(
-                (eval_ds.queries_num * 5, args.features_dim), dtype="float32"
-            )
+            queries_features = np.ones((eval_ds.queries_num * 5, 256), dtype="float32")
         else:
-            queries_features = np.ones(
-                (eval_ds.queries_num, args.features_dim), dtype="float32"
-            )
+            queries_features = np.ones((eval_ds.queries_num, 256), dtype="float32")
         logging.debug("Extracting queries features for evaluation/testing")
         queries_infer_batch_size = (
             1 if test_method == "single_query" else args.infer_batch_size
@@ -56,7 +53,20 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
                 or test_method == "maj_voting"
             ):
                 inputs = torch.cat(tuple(inputs))  # shape = 5*bs x 3 x 480 x 480
-            features = model(inputs.to(args.device))
+            for image in inputs:
+                grayscale_img = (
+                    0.2989 * image[0, :, :]
+                    + 0.5870 * image[1, :, :]
+                    + 0.1140 * image[2, :, :]
+                )
+                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                grayscale_img = cv2.resize(
+                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                )
+                feature = model(grayscale_img)
+                features.append(feature)
+            # Add one dimension to features
+            features = torch.stack(features)
             if test_method == "five_crops":  # Compute mean along the 5 crops
                 features = torch.stack(torch.split(features, 5)).mean(1)
             if test_method == "nearest_crop" or test_method == "maj_voting":
@@ -82,8 +92,20 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
             pin_memory=(args.device == "cuda"),
         )
         for inputs, indices in tqdm(database_dataloader, ncols=100):
-            inputs = inputs.to(args.device)
-            features = model(inputs)
+            for image in inputs:
+                grayscale_img = (
+                    0.2989 * image[0, :, :]
+                    + 0.5870 * image[1, :, :]
+                    + 0.1140 * image[2, :, :]
+                )
+                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                grayscale_img = cv2.resize(
+                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                )
+                feature = model(grayscale_img)
+                features.append(feature)
+            # Add one dimension to features
+            features = torch.stack(features)
             for pn, (index, pred_feature) in enumerate(zip(indices, features)):
                 distances[:, index] = (
                     ((queries_features - pred_feature) ** 2).sum(1).cpu().numpy()
@@ -188,15 +210,28 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
 
         if test_method == "nearest_crop" or test_method == "maj_voting":
             all_features = np.empty(
-                (5 * eval_ds.queries_num + eval_ds.database_num, args.features_dim),
+                (5 * eval_ds.queries_num + eval_ds.database_num, 256),
                 dtype="float32",
             )
         else:
-            all_features = np.empty((len(eval_ds), args.features_dim), dtype="float32")
+            all_features = np.empty((len(eval_ds), 256), dtype="float32")
 
         for inputs, indices in tqdm(database_dataloader, ncols=100):
-            features = model(inputs.to(args.device))
-            features = features.cpu().numpy()
+            features = []
+            for image in inputs:
+                grayscale_img = (
+                    0.2989 * image[0, :, :]
+                    + 0.5870 * image[1, :, :]
+                    + 0.1140 * image[2, :, :]
+                )
+                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                grayscale_img = cv2.resize(
+                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                )
+                feature = model(grayscale_img)
+                features.append(feature)
+            # Add one dimension to features
+            features = torch.stack(features)
             if pca is not None:
                 features = pca.transform(features)
             all_features[indices.numpy(), :] = features
@@ -225,7 +260,20 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
                 or test_method == "maj_voting"
             ):
                 inputs = torch.cat(tuple(inputs))  # shape = 5*bs x 3 x 480 x 480
-            features = model(inputs.to(args.device))
+            for image in inputs:
+                grayscale_img = (
+                    0.2989 * image[0, :, :]
+                    + 0.5870 * image[1, :, :]
+                    + 0.1140 * image[2, :, :]
+                )
+                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                grayscale_img = cv2.resize(
+                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                )
+                feature = model(grayscale_img)
+                features.append(feature)
+            # Add one dimension to features
+            features = torch.stack(features)
             if test_method == "five_crops":  # Compute mean along the 5 crops
                 features = torch.stack(torch.split(features, 5)).mean(1)
             features = features.cpu().numpy()
@@ -247,7 +295,7 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
     queries_features = all_features[eval_ds.database_num :]
     database_features = all_features[: eval_ds.database_num]
 
-    faiss_index = faiss.IndexFlatL2(args.features_dim)
+    faiss_index = faiss.IndexFlatL2(256)
     faiss_index.add(database_features)
     del database_features, all_features
 

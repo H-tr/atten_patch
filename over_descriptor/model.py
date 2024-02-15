@@ -110,6 +110,9 @@ class network(nn.Module):
             cuda=cuda,
         )
 
+        for param in self.local_descriptor_extractor.net.parameters():
+            param.requires_grad = False
+
         self.over_descriptor = ReprDescriptor(
             in_h=32,
             in_w=32,
@@ -123,7 +126,7 @@ class network(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.local_descriptor_extractor.run(x)
         # Reshape x as (256, 32, 32)
-        x = torch.reshape(torch.Tensor(x), (256, 32, 32))
+        x = torch.reshape(torch.Tensor(x), (256, 32, 32)).to("cuda")
         # TODO: mask
         x = self.over_descriptor(x)
         return x
