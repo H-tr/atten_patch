@@ -22,7 +22,7 @@ torch.backends.cudnn.benchmark = True  # Provides a speedup
 #### Initial setup: parser, logging...
 args = parser.parse_arguments()
 start_time = datetime.now()
-args.save_dir = join("logs", args.save_dir, start_time.strftime("%Y-%m-%d_%H-%M-%S"))
+args.save_dir = join("outputs", args.save_dir, start_time.strftime("%Y-%m-%d_%H-%M-%S"))
 commons.setup_logging(args.save_dir)
 commons.make_deterministic(args.seed)
 logging.info(f"Arguments: {args}")

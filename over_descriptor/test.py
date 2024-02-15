@@ -54,6 +54,7 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
             ):
                 inputs = torch.cat(tuple(inputs))  # shape = 5*bs x 3 x 480 x 480
             for image in inputs:
+                image = image.cpu()
                 grayscale_img = (
                     0.2989 * image[0, :, :]
                     + 0.5870 * image[1, :, :]
@@ -93,6 +94,7 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
         )
         for inputs, indices in tqdm(database_dataloader, ncols=100):
             for image in inputs:
+                image = image.cpu()
                 grayscale_img = (
                     0.2989 * image[0, :, :]
                     + 0.5870 * image[1, :, :]
@@ -219,6 +221,7 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
         for inputs, indices in tqdm(database_dataloader, ncols=100):
             features = []
             for image in inputs:
+                image = image.cpu()
                 grayscale_img = (
                     0.2989 * image[0, :, :]
                     + 0.5870 * image[1, :, :]
@@ -261,6 +264,7 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
             ):
                 inputs = torch.cat(tuple(inputs))  # shape = 5*bs x 3 x 480 x 480
             for image in inputs:
+                image = image.cpu()
                 grayscale_img = (
                     0.2989 * image[0, :, :]
                     + 0.5870 * image[1, :, :]

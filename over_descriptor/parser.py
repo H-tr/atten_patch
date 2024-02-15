@@ -225,8 +225,8 @@ def parse_arguments():
     parser.add_argument(
         "--save_dir",
         type=str,
-        default="default",
-        help="Folder name of the current run (saved in ./logs/)",
+        default="aggregation",
+        help="Folder name of the current run (saved in ./outputs/)",
     )
     args = parser.parse_args()
 
