@@ -53,6 +53,7 @@ from rich.progress import track
 import pickle
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
 from utils import utils
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     anchor_select_policy = config["model"]["anchor_select_policy"]
     seg_config_file = config["model"]["seg_config_file"]
     seg_checkpoint_file = config["model"]["seg_checkpoint_file"]
-    
+
     segmentor = Segmentor(seg_config_file, seg_checkpoint_file)
 
     if opt.prediction_path is not None:
@@ -138,7 +139,9 @@ if __name__ == "__main__":
 
             refer_encoding_time = 0
             print("==> Encoding References...")
-            for refer in track(range(total_refer_imgs), description="Encoding References"):
+            for refer in track(
+                range(total_refer_imgs), description="Encoding References"
+            ):
                 # print('==> Refer: ' + str(refer + refer_index_offset))
                 try:
                     refer_img = cv2.imread(
@@ -297,7 +300,9 @@ if __name__ == "__main__":
                     adaptive_spatial_matching(desc, refer_descriptors, anchors)
                 )
             elif method == "FullGeomVeri":
-                similarity.append(geometry_verification(desc, refer_descriptors, total_refer_imgs))
+                similarity.append(
+                    geometry_verification(desc, refer_descriptors, total_refer_imgs)
+                )
                 anchor_select_policy = "default"
             else:
                 raise ValueError("method should be one of [AttnPatch, FullGeomVeri]")

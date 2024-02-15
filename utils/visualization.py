@@ -236,7 +236,8 @@ def visual_atten(
 
     return query_img_labels, refer_img_labels, score
 
-def wait_continue(figure, timeout: float = 0, continue_key: str = ' ') -> int:
+
+def wait_continue(figure, timeout: float = 0, continue_key: str = " ") -> int:
     """Show the image and wait for the user's input.
 
     This implementation refers to
@@ -254,7 +255,8 @@ def wait_continue(figure, timeout: float = 0, continue_key: str = ' ') -> int:
     """  # noqa: E501
     import matplotlib.pyplot as plt
     from matplotlib.backend_bases import CloseEvent
-    is_inline = 'inline' in plt.get_backend()
+
+    is_inline = "inline" in plt.get_backend()
     if is_inline:
         # If use inline backend, interactive input and timeout is no use.
         return 0
@@ -278,7 +280,7 @@ def wait_continue(figure, timeout: float = 0, continue_key: str = ' ') -> int:
 
         cids = [
             figure.canvas.mpl_connect(name, handler)  # type: ignore
-            for name in ('key_press_event', 'close_event')
+            for name in ("key_press_event", "close_event")
         ]
 
         try:

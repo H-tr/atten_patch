@@ -23,7 +23,6 @@ We thank the Nanne repo https://github.com/Nanne/pytorch-NetVlad for inspiration
 into the design of the dataloader
 """
 
-
 import os
 
 import torch.utils.data as data

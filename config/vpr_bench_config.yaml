@@ -1,5 +1,5 @@
 Dataset:
-  Root: 'E:\\Datasets/VPR-Bench-Datasets'
+  Root: '/mnt/d/Datasets/VPR-Bench-Datasets'
 
   Nordland:
     path: '/Nordland/'
@@ -31,7 +31,7 @@ Dataset:
 
   Gardens:
     path: '/GardensPoint_TN/'
-    query_dir: '/GardensPoint_TN/query/'
+    query_dir: '/GardensPoint_TN/day_right/'
     refer_dir: '/GardensPoint_TN/ref/'
     total_query_imgs: 200
     total_refer_imgs: 200
@@ -62,6 +62,6 @@ model:
   conf_thresh: 0.015
   weights_path: 'pretrained_models/superpoint_v1.pth'
   method: "AttnPatch" # ["AttnPatch", "FullGeomVeri"]
-  anchor_select_policy: "segmentation"  # ["random", "largest_score", "conv_filter", "keypoint, "segmentation"], if method is FullGeomVeri, using "default"
+  anchor_select_policy: "largest_score"  # ["random", "largest_score", "conv_filter", "keypoint, "segmentation"], if method is FullGeomVeri, using "default"
   seg_config_file: "pretrained_models/segformer_mit-b4_8xb2-160k_ade20k-512x512.py"
   seg_checkpoint_file: "pretrained_models/segformer_mit-b4_512x512_160k_ade20k_20210728_183055-7f509d7d.pth"

@@ -7,10 +7,11 @@ scipy
 regex
 PyYAML
 openmim
+faiss-cpu
 torchaudio
 scikit-learn
 opencv-python
-mmsegmentation>=1.0.0
+git+https://github.com/open-mmlab/mmcv.git
 --extra-index-url https://download.pytorch.org/whl/cu121
 torch 
 torchvision
