@@ -53,21 +53,15 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
                 or test_method == "maj_voting"
             ):
                 inputs = torch.cat(tuple(inputs))  # shape = 5*bs x 3 x 480 x 480
-            for image in inputs:
-                image = image.cpu()
-                grayscale_img = (
-                    0.2989 * image[0, :, :]
-                    + 0.5870 * image[1, :, :]
-                    + 0.1140 * image[2, :, :]
-                )
-                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
-                grayscale_img = cv2.resize(
-                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
-                )
-                feature = model(grayscale_img)
-                features.append(feature)
-            # Add one dimension to features
-            features = torch.stack(features)
+            grayscale_imgs = (
+                0.2989 * inputs[:, 0, :, :]
+                + 0.5870 * inputs[:, 1, :, :]
+                + 0.1140 * inputs[:, 2, :, :]
+            )
+            # Reshape grayscale_imgs to (batch_size, 1, H, W)
+            grayscale_imgs = grayscale_imgs.unsqueeze(1)
+            # Change tensor to numpy and save as float32
+            features = model(grayscale_imgs.numpy().astype(np.float32))
             if test_method == "five_crops":  # Compute mean along the 5 crops
                 features = torch.stack(torch.split(features, 5)).mean(1)
             if test_method == "nearest_crop" or test_method == "maj_voting":
@@ -93,21 +87,15 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
             pin_memory=(args.device == "cuda"),
         )
         for inputs, indices in tqdm(database_dataloader, ncols=100):
-            for image in inputs:
-                image = image.cpu()
-                grayscale_img = (
-                    0.2989 * image[0, :, :]
-                    + 0.5870 * image[1, :, :]
-                    + 0.1140 * image[2, :, :]
-                )
-                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
-                grayscale_img = cv2.resize(
-                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
-                )
-                feature = model(grayscale_img)
-                features.append(feature)
-            # Add one dimension to features
-            features = torch.stack(features)
+            grayscale_imgs = (
+                0.2989 * inputs[:, 0, :, :]
+                + 0.5870 * inputs[:, 1, :, :]
+                + 0.1140 * inputs[:, 2, :, :]
+            )
+            # Reshape grayscale_imgs to (batch_size, 1, H, W)
+            grayscale_imgs = grayscale_imgs.unsqueeze(1)
+            # Change tensor to numpy and save as float32
+            features = model(grayscale_imgs.numpy().astype(np.float32))
             for pn, (index, pred_feature) in enumerate(zip(indices, features)):
                 distances[:, index] = (
                     ((queries_features - pred_feature) ** 2).sum(1).cpu().numpy()
@@ -219,25 +207,18 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
             all_features = np.empty((len(eval_ds), 256), dtype="float32")
 
         for inputs, indices in tqdm(database_dataloader, ncols=100):
-            features = []
-            for image in inputs:
-                image = image.cpu()
-                grayscale_img = (
-                    0.2989 * image[0, :, :]
-                    + 0.5870 * image[1, :, :]
-                    + 0.1140 * image[2, :, :]
-                )
-                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
-                grayscale_img = cv2.resize(
-                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
-                )
-                feature = model(grayscale_img)
-                features.append(feature)
-            # Add one dimension to features
-            features = torch.stack(features)
+            grayscale_imgs = (
+                0.2989 * inputs[:, 0, :, :]
+                + 0.5870 * inputs[:, 1, :, :]
+                + 0.1140 * inputs[:, 2, :, :]
+            )
+            # Reshape grayscale_imgs to (batch_size, 1, H, W)
+            grayscale_imgs = grayscale_imgs.unsqueeze(1)
+            # Change tensor to numpy and save as float32
+            features = model(grayscale_imgs.numpy().astype(np.float32))
             if pca is not None:
                 features = pca.transform(features)
-            all_features[indices.numpy(), :] = features
+            all_features[indices.numpy(), :] = features.cpu()
 
         logging.debug("Extracting queries features for evaluation/testing")
         queries_infer_batch_size = (
@@ -263,21 +244,15 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
                 or test_method == "maj_voting"
             ):
                 inputs = torch.cat(tuple(inputs))  # shape = 5*bs x 3 x 480 x 480
-            for image in inputs:
-                image = image.cpu()
-                grayscale_img = (
-                    0.2989 * image[0, :, :]
-                    + 0.5870 * image[1, :, :]
-                    + 0.1140 * image[2, :, :]
-                )
-                grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
-                grayscale_img = cv2.resize(
-                    grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
-                )
-                feature = model(grayscale_img)
-                features.append(feature)
-            # Add one dimension to features
-            features = torch.stack(features)
+            grayscale_imgs = (
+                0.2989 * inputs[:, 0, :, :]
+                + 0.5870 * inputs[:, 1, :, :]
+                + 0.1140 * inputs[:, 2, :, :]
+            )
+            # Reshape grayscale_imgs to (batch_size, 1, H, W)
+            grayscale_imgs = grayscale_imgs.unsqueeze(1)
+            # Change tensor to numpy and save as float32
+            features = model(grayscale_imgs.numpy().astype(np.float32))
             if test_method == "five_crops":  # Compute mean along the 5 crops
                 features = torch.stack(torch.split(features, 5)).mean(1)
             features = features.cpu().numpy()

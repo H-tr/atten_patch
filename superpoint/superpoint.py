@@ -196,17 +196,17 @@ class SuperPointFrontend(object):
     def run(self, img):
         """Process a numpy image to extract points and descriptors.
         Input
-          img - HxW numpy float32 input image in range [0,1].
+          img - Nx1xHxW numpy float32 input image in range [0,1].
         Output
           desc - 256xN numpy array of corresponding unit normalized descriptors.
         """
-        assert img.ndim == 2, "Image must be grayscale."
         assert img.dtype == np.float32, "Image must be float32."
-        H, W = img.shape[0], img.shape[1]
+        N, C, H, W = img.shape
+        assert C == 1, "Image must be grayscale."
         inp = img.copy()
-        inp = inp.reshape(1, H, W)
+        # inp = inp.reshape(1, H, W)
         inp = torch.from_numpy(inp)
-        inp = torch.autograd.Variable(inp).view(1, 1, H, W)
+        inp = torch.autograd.Variable(inp).view(N, 1, H, W)
         if self.cuda:
             inp = inp.cuda()
         # Forward pass of network.
@@ -214,8 +214,9 @@ class SuperPointFrontend(object):
         coarse_desc = outs[1]
 
         # --- Process descriptor.
+        N = coarse_desc.shape[0]
         D = coarse_desc.shape[1]
-        desc = coarse_desc.data.cpu().numpy().reshape(D, -1)
+        desc = coarse_desc.data.cpu().numpy().reshape(N, D, -1)
         desc /= np.linalg.norm(desc, axis=0)[np.newaxis, :]
         return desc
 
