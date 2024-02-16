@@ -26,9 +26,9 @@ def test_efficient_ram_usage(args, eval_ds, model, test_method="hard_resize"):
 
     with torch.no_grad():
         if test_method == "nearest_crop" or test_method == "maj_voting":
-            queries_features = np.ones((eval_ds.queries_num * 5, 256), dtype="float32")
+            queries_features = np.ones((eval_ds.queries_num * 5, args.features_dim), dtype="float32")
         else:
-            queries_features = np.ones((eval_ds.queries_num, 256), dtype="float32")
+            queries_features = np.ones((eval_ds.queries_num, args.features_dim), dtype="float32")
         logging.debug("Extracting queries features for evaluation/testing")
         queries_infer_batch_size = (
             1 if test_method == "single_query" else args.infer_batch_size
@@ -200,11 +200,11 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
 
         if test_method == "nearest_crop" or test_method == "maj_voting":
             all_features = np.empty(
-                (5 * eval_ds.queries_num + eval_ds.database_num, 256),
+                (5 * eval_ds.queries_num + eval_ds.database_num, args.features_dim),
                 dtype="float32",
             )
         else:
-            all_features = np.empty((len(eval_ds), 256), dtype="float32")
+            all_features = np.empty((len(eval_ds), args.features_dim), dtype="float32")
 
         for inputs, indices in tqdm(database_dataloader, ncols=100):
             grayscale_imgs = (
@@ -274,7 +274,7 @@ def test(args, eval_ds, model, test_method="hard_resize", pca=None):
     queries_features = all_features[eval_ds.database_num :]
     database_features = all_features[: eval_ds.database_num]
 
-    faiss_index = faiss.IndexFlatL2(256)
+    faiss_index = faiss.IndexFlatL2(args.features_dim)
     faiss_index.add(database_features)
     del database_features, all_features
 

@@ -93,6 +93,7 @@ class network(nn.Module):
     def __init__(
         self,
         weights_path,
+        features_dim: int = 256,
         nms_dist: int = 4,
         conf_thresh: float = 0.015,
         nn_thresh: float = 0.7,
@@ -124,13 +125,9 @@ class network(nn.Module):
         # )
 
         self.mlp = nn.Sequential(
-            nn.Linear(256 * 60 * 80, 256),
-            # nn.ReLU(),
-            # nn.Linear(256*16*16, 256*8*8),
-            # nn.ReLU(),
-            # nn.Linear(256*8*8, 256),
+            nn.Linear(256 * 60 * 80, features_dim),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(features_dim, features_dim),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

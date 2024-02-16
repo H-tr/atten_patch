@@ -45,11 +45,12 @@ logging.info(f"Val set: {val_ds}")
 test_ds = datasets_ws.BaseDataset(args, args.datasets_folder, args.dataset_name, "test")
 logging.info(f"Test set: {test_ds}")
 
-args.features_dim = 256
+args.features_dim = 512
 
 #### Initialize model
 model = network(
     weights_path="pretrained_models/superpoint_v1.pth",
+    features_dim=args.features_dim,
     nms_dist=4,
     conf_thresh=0.015,
     nn_thresh=0.7,

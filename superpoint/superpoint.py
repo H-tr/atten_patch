@@ -106,7 +106,7 @@ class SuperPointNet(torch.nn.Module):
 class SuperPointFrontend(object):
     """Wrapper around pytorch net to help with pre and post image processing."""
 
-    def __init__(self, weights_path, nms_dist, conf_thresh, nn_thresh, cuda=False):
+    def __init__(self, weights_path, nms_dist, conf_thresh, nn_thresh, cuda=True):
         self.name = "SuperPoint"
         self.cuda = cuda
         self.nms_dist = nms_dist
