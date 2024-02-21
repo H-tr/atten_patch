@@ -93,7 +93,6 @@ class network(nn.Module):
     def __init__(
         self,
         weights_path,
-        features_dim: int = 256,
         nms_dist: int = 4,
         conf_thresh: float = 0.015,
         nn_thresh: float = 0.7,
@@ -114,29 +113,34 @@ class network(nn.Module):
         for param in self.local_descriptor_extractor.net.parameters():
             param.requires_grad = False
 
-        # self.over_descriptor = ReprDescriptor(
-        #     in_h=32,
-        #     in_w=32,
-        #     in_channels=256,
-        #     out_channels=256,
-        #     out_rows=64,
-        #     mix_depth=4,
-        #     mlp_ratio=1,
-        # )
-
-        self.mlp = nn.Sequential(
-            nn.Linear(256 * 60 * 80, features_dim),
-            nn.ReLU(),
-            nn.Linear(features_dim, features_dim),
+        self.over_descriptor = ReprDescriptor(
+            in_h=32,
+            in_w=32,
+            in_channels=256,
+            out_channels=256,
+            out_rows=64,
+            mix_depth=4,
+            mlp_ratio=1,
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.local_descriptor_extractor.run(x)
-        N = x.shape[0]
+        # Reshape x as (256, 32, 32)
+        x = torch.reshape(torch.Tensor(x), (256, 32, 32)).to("cuda")
         # TODO: mask
-        # x = self.over_descriptor(x)
-        x = x.reshape(N, -1)
-        # Convert x to tensor
-        x = torch.Tensor(x).to("cuda")
-        x = self.mlp(x)
+        x = self.over_descriptor(x)
         return x
+
+
+if __name__ == "__main__":
+    model = network(
+        weights_path="pretrained_models/superpoint_v1.pth",
+        nms_dist=4,
+        conf_thresh=0.015,
+        nn_thresh=0.7,
+        cuda=True,
+    )
+    # print(model)
+    x = np.random.random((256, 256)).astype(np.float32)
+    y = model(x)
+    print(y.shape)

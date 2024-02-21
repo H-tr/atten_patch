@@ -106,6 +106,7 @@ if __name__ == "__main__":
     anchor_select_policy = config["model"]["anchor_select_policy"]
     seg_config_file = config["model"]["seg_config_file"]
     seg_checkpoint_file = config["model"]["seg_checkpoint_file"]
+    padding_with_zeros = config["model"]["padding_with_zeros"]
 
     segmentor = Segmentor(seg_config_file, seg_checkpoint_file)
 
@@ -168,6 +169,16 @@ if __name__ == "__main__":
                 else:
                     with torch.no_grad():
                         desc = val_agent.run(refer_img)
+                        
+                if padding_with_zeros:
+                    result = segmentor.inference(refer_img)
+                    mask = segmentor.mask(result)
+                    # Deresolution the mask to 32 * 32
+                    mask = cv2.resize(mask, (32, 32), interpolation=cv2.INTER_AREA)
+                    # Get the values from utils.idx_table for the pixels where mask is 1
+                    mask = np.reshape(mask, -1)
+                    # Make desc 0 where mask is 0
+                    desc = desc * mask
 
                 refer_descriptors.append(desc)
                 refer_encoding_time += time.time() - refer_encoding_timer_start
@@ -216,6 +227,16 @@ if __name__ == "__main__":
                     with torch.no_grad():
                         desc = val_agent.run(query_img)
             query_encoding_time += time.time() - query_encoding_timer_start
+            
+            if padding_with_zeros:
+                result = segmentor.inference(query_img)
+                mask = segmentor.mask(result)
+                # Deresolution the mask to 32 * 32
+                mask = cv2.resize(mask, (32, 32), interpolation=cv2.INTER_AREA)
+                # Get the values from utils.idx_table for the pixels where mask is 1
+                mask = np.reshape(mask, -1)
+                # Make desc 0 where mask is 0
+                desc = desc * mask
 
             matching_timer_starter = time.time()
 

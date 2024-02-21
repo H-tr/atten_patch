@@ -358,15 +358,21 @@ class TripletsDataset(BaseDataset):
         with torch.no_grad():
             for images, indexes in tqdm(subset_dl, ncols=100):
                 # Change images to grayscale
-                grayscale_imgs = (
-                    0.2989 * images[:, 0, :, :]
-                    + 0.5870 * images[:, 1, :, :]
-                    + 0.1140 * images[:, 2, :, :]
-                )
-                # Reshape grayscale_imgs to (batch_size, 1, H, W)
-                grayscale_imgs = grayscale_imgs.unsqueeze(1)
-                # Change tensor to numpy and save as float32
-                features = model(grayscale_imgs.numpy().astype(np.float32))
+                features = []
+                for image in images:
+                    grayscale_img = (
+                        0.2989 * image[0, :, :]
+                        + 0.5870 * image[1, :, :]
+                        + 0.1140 * image[2, :, :]
+                    )
+                    grayscale_img = np.asarray(grayscale_img.cpu(), dtype=np.float32)
+                    grayscale_img = cv2.resize(
+                        grayscale_img, (256, 256), interpolation=cv2.INTER_LINEAR
+                    )
+                    feature = model(grayscale_img)
+                    features.append(feature)
+                # Add one dimension to features
+                features = torch.stack(features)
                 cache[indexes.numpy()] = features.cpu().numpy()
         return cache
 

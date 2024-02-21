@@ -81,8 +81,8 @@ def get_query_img_name(dataset, cnt):
 
 def get_refer_img_name(dataset, cnt):
     if dataset == "Gardens":
-        name = str(cnt).zfill(3)
-        return "Image" + name + ".jpg"
+        name = str(cnt).zfill(7)
+        return name + ".jpg"
     elif dataset == "Test":
         return str(cnt) + ".png"
     elif (
